@@ -1,5 +1,5 @@
 # Niddah-Calculator
-Google Apps Script code to calculate events relevant to the Niddah Cycle. Made to work with Google Calendar
+Google Apps Script code to calculate events relevant to the Niddah Cycle. Made to work with Google Calendar. Set a trigger to run the function "main", under  "Select event source" choose "From Calender", and under "Enter calendar details" choose "Calendar updated".
 
 This code will generate the three vestos (vest bainonis, vest hachodesh, and vest haflaga), an ohr zaruah event for the 12 hours before a vest, 14 bedika reminders and a mikva night event. It does not account for any other chumros.
 
