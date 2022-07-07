@@ -31,15 +31,17 @@ for (var i = 0; i < eventsToday.length; i++) {
     Logger.log(`Finished "Hefsek Tahara"`);    
   }
   if (title == "remove hefsek tahara") {
-    var sevenDaysFromNow = addDays(today, 7);
-    var hefsekEvents = CalendarApp.getDefaultCalendar().getEvents(sevenDaysAgo, sevenDaysFromNow);
+    var removedEvents = 0;
+    var eightDaysFromNow = addDays(today, 8);
+    var hefsekEvents = CalendarApp.getDefaultCalendar().getEvents(sevenDaysAgo, eightDaysFromNow);
     for (var j = 0; j < hefsekEvents.length; j++) {
-    var hefsekTitle = hefsekEvents[j].getTitle();
-    if (hefsekTitle == "Remove Hefsek Tahara" || hefsekTitle.substring(0, 8) == "Bedika #" || hefsekTitle == "Hefsek Tahara" || hefsekTitle == "Mikvah Night") {
+    var hefsekTitle = hefsekEvents[j].getTitle().toLowerCase();
+    if (hefsekTitle == "remove hefsek tahara" || hefsekTitle.substring(0, 8) == "bedika #" || hefsekTitle == "hefsek tahara" || hefsekTitle == "mikvah night") {
+      removedEvents++;
       hefsekEvents[j].deleteEvent();
         }
      }
-     Logger.log(`Finished Removing Events`);
+     Logger.log(`Removed ${removedEvents} Events`);
    }
   }
 }
@@ -180,8 +182,8 @@ function calcShekiyah(_Date) {
   var minute = response.substring(3, 5);
   var second = response.substring(6, 8);
   // console.log(`hour: ${hour}, minute: ${minute}, second: ${second}`);
-  month--;
-  var shekiyah = new Date(year, month, day, hour, minute, second);
+  englishYearMonthDay[1]--;
+  var shekiyah = new Date(englishYearMonthDay[0], englishYearMonthDay[1], englishYearMonthDay[2], hour, minute, second);
   return shekiyah;
 }
 
