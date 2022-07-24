@@ -189,14 +189,15 @@ function calcShekiyah(_Date) {
 
 function calcVHaf(_Date, nightOrDay) {
 var prevPeriodTime = "Not yet set";
-var prevPeriod = today;
-var startDay = addDays(today, -45);
-var endDay = addDays(today, -3);
+var prevPeriod = _Date;
+var startDay = addDays(_Date, -45);
+var endDay = addDays(_Date, -3);
 var prevEvents = CalendarApp.getDefaultCalendar().getEvents(startDay, endDay);
   for (var i = 0; i < prevEvents.length; i++) {
       if (prevEvents[i].getTitle() == "Day Period" ||  prevEvents[i].getTitle() == "Night Period") {        
         prevPeriod = prevEvents[i].getStartTime();
         prevPeriodTime = prevEvents[i].getTitle();
+        break;
       }      
     }  
  var diffTime = Math.abs(prevPeriod - _Date); 
