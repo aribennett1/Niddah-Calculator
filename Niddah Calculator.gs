@@ -287,16 +287,13 @@ function calcVHac(_Date) {
     hebrewDay = "0" + hebrewDay;
   }
   if (hebrewMonth == "Tishrei") {
-    var hebrewYearInt = parseInt(hebrewYear);
-    hebrewYearInt++;
-    hebrewYear = hebrewYearInt.toString();
+    hebrewYear = parseInt(hebrewYear) + 1;
   }
   url = `https://www.hebcal.com/converter?cfg=json&hy=${hebrewYear}&hm=${hebrewMonth}&hd=${hebrewDay}&h2g=1`;
   response = UrlFetchApp.fetch(url).getContentText();
   var vhYear = response.substring(response.indexOf(`"gy":`) + 5, response.indexOf(`,"gm":`));
   var vhMonth = response.substring(response.indexOf(`"gm":`) + 5, response.indexOf(`,"gd":`))
-  vhMonth = parseInt(vhMonth);
-  vhMonth--;
+  vhMonth = parseInt(vhMonth) - 1;
   var vhDay = response.substring(response.indexOf(`"gd":`) + 5, response.indexOf(`,"afterSunset"`));
   return new Date(vhYear, vhMonth, vhDay);
 }
