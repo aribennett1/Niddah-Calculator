@@ -50,10 +50,11 @@ function createDayVestBainonis(_Date) {
   var title = "Vest Bainonis";
   var startDay = addDays(_Date, 29).setHours(6);
   var endDay = addDays(_Date, 29).setHours(18);
-  CalendarApp.getDefaultCalendar().createEvent(`Day ${title}`, new Date(startDay), new Date(endDay));  
+  let success = createEvent(`Day ${title}`, startDay, endDay);
+  if (success) {
   createNightOhrZaruah(startDay, title);
   createDayVestBedikos(startDay, title);
-  Logger.log(`Created "Day Vest Bainonis"`);
+  Logger.log(`Created "Day Vest Bainonis"`);}
 }
 
 function createDayVestHachodesh(_Date) {
@@ -61,20 +62,28 @@ var title = "Vest Hachodesh";
 var vhDate = calcVHac(_Date);
 var startDay = vhDate.setHours(6);
 var endDay = vhDate.setHours(18);
-  CalendarApp.getDefaultCalendar().createEvent(`Day ${title}`, new Date(startDay), new Date(endDay));
+let success = createEvent(`Day ${title}`, startDay, endDay);
+  if (success) {
   createNightOhrZaruah(startDay, title);
   createDayVestBedikos(startDay, title);
-  Logger.log(`Created "Day Vest Hachodesh"`);
+  Logger.log(`Created "Day Vest Hachodesh"`);}
 }
 
 function createDayVestHaflaga(_Date, nightOrDay) {
-  var title = "Vest Haflaga";
-  var interval = calcVHaf(_Date, nightOrDay);
-  console.log("Interval: ",interval);
-  if (interval > 3) {
+  var intervals = calcVHaf(_Date, nightOrDay);
+  let futureEvents = CalendarApp.getDefaultCalendar().getEvents(_Date, addDays(_Date, intervals[0] + 1));
+  for (var i in futureEvents) {
+      if (futureEvents[i].getTitle().includes(title)) {
+        console.log(`Deleting "${futureEvents[i].getTitle()}" on ${futureEvents[i].getStartTime()}...`);
+        futureEvents[i].deleteEvent();
+      }      
+    }  
+  var interval;
+  for (var num in intervals) {
+  interval = intervals[num];
   var startDay = addDays(_Date, interval).setHours(6);
   var endDay = addDays(_Date, interval).setHours(18);
-  CalendarApp.getDefaultCalendar().createEvent(`Day ${title} (${interval} days)`, new Date(startDay), new Date(endDay));
+  createEvent(`Day ${title}`, startDay, endDay);
   createNightOhrZaruah(startDay, title);
   createDayVestBedikos(startDay, title);
   Logger.log(`Created "Day Vest Haflaga"`);
@@ -84,7 +93,7 @@ function createDayVestHaflaga(_Date, nightOrDay) {
 function createNightOhrZaruah(_Date, title) {
   var startDay = addDays(_Date, -1).setHours(18);
   var endDay = addDays(_Date, 0).setHours(6);
-  CalendarApp.getDefaultCalendar().createEvent(`Night Ohr Zaruah (Day ${title})`, new Date(startDay), new Date(endDay));
+  createEvent(`Night Ohr Zaruah (Day ${title})`, startDay, endDay);
   Logger.log(`Created "Night Ohr Zaruah"`);
 }
 
@@ -104,10 +113,11 @@ function createNightVestBainonis(_Date) {
   var title = "Vest Bainonis";
   var startDay = addDays(_Date, 29).setHours(18);
   var endDay = addDays(_Date, 30).setHours(6);
-  CalendarApp.getDefaultCalendar().createEvent(`Night ${title}`, new Date(startDay), new Date(endDay));
+  let success = createEvent(`Night ${title}`, startDay, endDay);
+  if (success) {
   createDayOhrZaruah(startDay, title);
   createNightVestBedikos(startDay, title);
-  Logger.log(`Created "Night Vest Bainonis"`);
+  Logger.log(`Created "Night Vest Bainonis"`);}
 }
 
 function createNightVestHachodesh(_Date) {
@@ -115,29 +125,39 @@ function createNightVestHachodesh(_Date) {
 var vhDate = calcVHac(_Date);
 var startDay = vhDate.setHours(18);
 var endDay = vhDate.setHours(30);
-  CalendarApp.getDefaultCalendar().createEvent(`Night ${title}`, new Date(startDay), new Date(endDay));
+   let success = createEvent(`Night ${title}`, startDay, endDay);
+  if (success) {
   createDayOhrZaruah(startDay, title);
   createNightVestBedikos(startDay, title);
-  Logger.log(`Created "Night Vest Hachodesh"`);
+  Logger.log(`Created "Night Vest Hachodesh"`);}
 }
 
 function createNightVestHaflaga(_Date, nightOrDay) {
   var title = "Vest Haflaga";
-  var interval = calcVHaf(_Date, nightOrDay);
-  if (interval > 3) {
+  var intervals = calcVHaf(_Date, nightOrDay);
+  let futureEvents = CalendarApp.getDefaultCalendar().getEvents(_Date, addDays(_Date, intervals[0] + 1));
+  for (var i in futureEvents) {
+      if (futureEvents[i].getTitle().includes(title)) {
+        console.log(`Deleting "${futureEvents[i].getTitle()}" on ${futureEvents[i].getStartTime()}...`);
+        futureEvents[i].deleteEvent();
+      }      
+    }  
+  var interval;
+  for (var num in intervals) {
+  interval = intervals[num];
   var startDay = addDays(_Date, interval - 1).setHours(18);
   var endDay = addDays(_Date, interval).setHours(6);
-  CalendarApp.getDefaultCalendar().createEvent(`Night ${title} (${interval} days)`, new Date(startDay), new Date(endDay));
+  createEvent(`Night ${title}`, startDay, endDay);
   createDayOhrZaruah(startDay, title);
   createNightVestBedikos(startDay, title);
-  Logger.log(`Created "Night Vest Haflaga"`);
   }
+  Logger.log(`Created "Night Vest Haflaga"`);
 }
 
 function createDayOhrZaruah(_Date, title) {
   var startDay = addDays(_Date, 0).setHours(6);
   var endDay = addDays(_Date, 0).setHours(18);
-  CalendarApp.getDefaultCalendar().createEvent(`Day Ohr Zaruah (Night ${title})`, new Date(startDay), new Date(endDay));
+  createEvent(`Day Ohr Zaruah (Night ${title})`, startDay, endDay);
   Logger.log(`Created "Day Ohr Zaruah"`);
 }
 
@@ -149,6 +169,26 @@ function createNightVestBedikos(_Date, title) {
   endDay = addDays(endDay, 1).setHours(9);
   CalendarApp.getDefaultCalendar().createEvent(`2nd (Morning) Bedika (${title})`, new Date(startDay), new Date(endDay));
   Logger.log(`Created "Two Night-Vest Bedikos"`);
+}
+
+function createEvent(title, startDay, endDay) {
+  let eventCreated = false;
+let futureEvents = CalendarApp.getDefaultCalendar().getEvents(new Date(startDay), new Date(endDay));
+  for (var i in futureEvents) {
+      if (futureEvents[i].getTitle().includes(title)) {
+        eventCreated = true;
+        break;
+      }
+  }
+  if (!eventCreated) {
+  let event = CalendarApp.getDefaultCalendar().createEvent(title, new Date(startDay), new Date(endDay), {guests: "slot700@gmail.com, crosa.wetstein@gmail.com"});
+  event.addEmailReminder(1440);
+  return true;
+    }
+else {
+    console.log(`Didn't create ${title}, event already present on date (${startDay})`);
+    return false;
+  }
 }
 
 function create14Bedikos(_Date) {
@@ -190,23 +230,49 @@ function calcShekiyah(_Date) {
 function calcVHaf(_Date, nightOrDay) {
 var prevPeriodTime = "Not yet set";
 var prevPeriod = _Date;
-var startDay = addDays(_Date, -45);
+var startDay = addDays(_Date, -120);
 var endDay = addDays(_Date, -3);
 var prevEvents = CalendarApp.getDefaultCalendar().getEvents(startDay, endDay);
   for (var i = 0; i < prevEvents.length; i++) {
-      if (prevEvents[i].getTitle() == "Day Period" ||  prevEvents[i].getTitle() == "Night Period") {        
+      if (prevEvents[i].getTitle().toLowerCase() == "day period" ||  prevEvents[i].getTitle().toLowerCase() == "night period") {        
         prevPeriod = prevEvents[i].getStartTime();
-        prevPeriodTime = prevEvents[i].getTitle();
-        break;
+        console.log("prevPeriod: " + prevPeriod);
+        prevPeriodTime = prevEvents[i].getTitle().toLowerCase();
+        console.log("prevPeriodTime: " + prevPeriodTime);
       }      
     }  
  var diffTime = Math.abs(prevPeriod - _Date); 
- var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
- if (prevPeriodTime == "Day Period" && nightOrDay == "Night Period") {
+ var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+ if (prevPeriodTime == "day period" && nightOrDay == "Night Period") {
         diffDays++;
       }
-console.log("diffDays: ", diffDays);
-  return diffDays + 1;
+console.log("diffDays: ", diffDays); 
+//USE TO RESET INTERVAL ARRAY, COMMENT OUT REST OF FUNCTION
+// var intervals = [];
+// intervals.push(diffDays);
+// intervals = JSON.stringify(intervals);
+// PropertiesService.getScriptProperties().setProperty("intervals", intervals);
+// console.log("intervals: " + intervals);
+
+var intervals = JSON.parse(PropertiesService.getScriptProperties().getProperty("intervals"));
+console.log("intervals: " + intervals);
+  for (var num = intervals.length - 1; num >= 0; num--) {
+    if (intervals[num] == diffDays) {console.log(`diffDays (${diffDays}) = ${intervals[num]} interval, exiting loop...`); break;}
+    if (intervals[num] > diffDays) {
+      console.log(`diffDays (${diffDays}) didn't pass ${intervals[num]} interval, adding ${diffDays}...`);      
+      intervals.push(diffDays);
+      break;
+   }
+   else {
+     console.log(`diffDays (${diffDays}) passed ${intervals[num]} interval, removing ${intervals[num]}...`);     
+     intervals.pop();
+   }
+  }
+  if (intervals.length == 0) {intervals.push(diffDays);}
+console.log("intervals: " + intervals);
+let jintervals = JSON.stringify(intervals);
+PropertiesService.getScriptProperties().setProperty("intervals", jintervals);
+return intervals;
 }
 
 function calcVHac(_Date) {
@@ -227,7 +293,6 @@ function calcVHac(_Date) {
   }
   url = `https://www.hebcal.com/converter?cfg=json&hy=${hebrewYear}&hm=${hebrewMonth}&hd=${hebrewDay}&h2g=1`;
   response = UrlFetchApp.fetch(url).getContentText();
-  console.log("here: " + response);
   var vhYear = response.substring(response.indexOf(`"gy":`) + 5, response.indexOf(`,"gm":`));
   var vhMonth = response.substring(response.indexOf(`"gm":`) + 5, response.indexOf(`,"gd":`))
   vhMonth = parseInt(vhMonth);
