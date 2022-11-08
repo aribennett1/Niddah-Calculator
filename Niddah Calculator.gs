@@ -106,13 +106,7 @@ function createDayVestBedikos(_Date, title) {
 
 function createNightVestBainonis(_Date) {
   var title = "Vest Bainonis";
-  deleteEvents(_Date, addDays(_Date, 31), title);
-  for (var i in futureEvents) {
-      if (futureEvents[i].getTitle().includes(title)) {
-        console.log(`Deleting "${futureEvents[i].getTitle()}" on ${futureEvents[i].getStartTime()}...`);
-        futureEvents[i].deleteEvent();
-      }      
-    }  
+  deleteEvents(_Date, addDays(_Date, 31), title); 
   var startDay = addDays(_Date, 29).setHours(18);
   var endDay = addDays(_Date, 30).setHours(6);
   createEvent(`Night ${title}`, startDay, endDay);
