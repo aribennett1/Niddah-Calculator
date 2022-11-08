@@ -51,11 +51,10 @@ function createDayVestBainonis(_Date) {
   deleteEvents(_Date, addDays(_Date, 31), title);
   var startDay = addDays(_Date, 29).setHours(6);
   var endDay = addDays(_Date, 29).setHours(18);
-  let success = createEvent(`Day ${title}`, startDay, endDay);
-  if (success) {
+  createEvent(`Day ${title}`, startDay, endDay);
   createNightOhrZaruah(startDay, title);
   createDayVestBedikos(startDay, title);
-  Logger.log(`Created "Day Vest Bainonis"`);}
+  Logger.log(`Created "Day Vest Bainonis"`);
 }
 
 function createDayVestHachodesh(_Date) {
@@ -63,10 +62,11 @@ var title = "Vest Hachodesh";
 var vhDate = calcVHac(_Date);
 var startDay = vhDate.setHours(6);
 var endDay = vhDate.setHours(18);
-createEvent(`Day ${title}`, startDay, endDay);
+let success = createEvent(`Day ${title}`, startDay, endDay);
+if (success) {
 createNightOhrZaruah(startDay, title);
 createDayVestBedikos(startDay, title);
-Logger.log(`Created "Day Vest Hachodesh"`);
+Logger.log(`Created "Day Vest Hachodesh"`);}
 }
 
 function createDayVestHaflaga(_Date, nightOrDay) {
