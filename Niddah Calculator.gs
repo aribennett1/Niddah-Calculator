@@ -48,6 +48,7 @@ for (var i = 0; i < eventsToday.length; i++) {
 
 function createDayVestBainonis(_Date) {
   var title = "Vest Bainonis";
+  deleteEvents(_Date, addDays(_Date, 31), title);
   var startDay = addDays(_Date, 29).setHours(6);
   var endDay = addDays(_Date, 29).setHours(18);
   let success = createEvent(`Day ${title}`, startDay, endDay);
@@ -58,26 +59,20 @@ function createDayVestBainonis(_Date) {
 }
 
 function createDayVestHachodesh(_Date) {
-var title = "Vest Hachodesh";
+var title = "Vest Hachodesh";  
 var vhDate = calcVHac(_Date);
 var startDay = vhDate.setHours(6);
 var endDay = vhDate.setHours(18);
-let success = createEvent(`Day ${title}`, startDay, endDay);
-  if (success) {
-  createNightOhrZaruah(startDay, title);
-  createDayVestBedikos(startDay, title);
-  Logger.log(`Created "Day Vest Hachodesh"`);}
+createEvent(`Day ${title}`, startDay, endDay);
+createNightOhrZaruah(startDay, title);
+createDayVestBedikos(startDay, title);
+Logger.log(`Created "Day Vest Hachodesh"`);
 }
 
 function createDayVestHaflaga(_Date, nightOrDay) {
+  var title = "Vest Haflaga";
   var intervals = calcVHaf(_Date, nightOrDay);
-  let futureEvents = CalendarApp.getDefaultCalendar().getEvents(_Date, addDays(_Date, intervals[0] + 1));
-  for (var i in futureEvents) {
-      if (futureEvents[i].getTitle().includes(title)) {
-        console.log(`Deleting "${futureEvents[i].getTitle()}" on ${futureEvents[i].getStartTime()}...`);
-        futureEvents[i].deleteEvent();
-      }      
-    }  
+  deleteEvents(_Date, addDays(_Date, intervals[0] + 1),title);  
   var interval;
   for (var num in intervals) {
   interval = intervals[num];
@@ -111,13 +106,19 @@ function createDayVestBedikos(_Date, title) {
 
 function createNightVestBainonis(_Date) {
   var title = "Vest Bainonis";
+  deleteEvents(_Date, addDays(_Date, 31), title);
+  for (var i in futureEvents) {
+      if (futureEvents[i].getTitle().includes(title)) {
+        console.log(`Deleting "${futureEvents[i].getTitle()}" on ${futureEvents[i].getStartTime()}...`);
+        futureEvents[i].deleteEvent();
+      }      
+    }  
   var startDay = addDays(_Date, 29).setHours(18);
   var endDay = addDays(_Date, 30).setHours(6);
-  let success = createEvent(`Night ${title}`, startDay, endDay);
-  if (success) {
+  createEvent(`Night ${title}`, startDay, endDay);
   createDayOhrZaruah(startDay, title);
   createNightVestBedikos(startDay, title);
-  Logger.log(`Created "Night Vest Bainonis"`);}
+  Logger.log(`Created "Night Vest Bainonis"`);
 }
 
 function createNightVestHachodesh(_Date) {
@@ -135,13 +136,7 @@ var endDay = vhDate.setHours(30);
 function createNightVestHaflaga(_Date, nightOrDay) {
   var title = "Vest Haflaga";
   var intervals = calcVHaf(_Date, nightOrDay);
-  let futureEvents = CalendarApp.getDefaultCalendar().getEvents(_Date, addDays(_Date, intervals[0] + 1));
-  for (var i in futureEvents) {
-      if (futureEvents[i].getTitle().includes(title)) {
-        console.log(`Deleting "${futureEvents[i].getTitle()}" on ${futureEvents[i].getStartTime()}...`);
-        futureEvents[i].deleteEvent();
-      }      
-    }  
+  deleteEvents(_Date, addDays(_Date, intervals[0] + 1), title);
   var interval;
   for (var num in intervals) {
   interval = intervals[num];
@@ -171,6 +166,16 @@ function createNightVestBedikos(_Date, title) {
   Logger.log(`Created "Two Night-Vest Bedikos"`);
 }
 
+function deleteEvents(startDay, endDay, title) {
+  let futureEvents = CalendarApp.getDefaultCalendar().getEvents(startDay, endDay);
+  for (var i in futureEvents) {
+      if (futureEvents[i].getTitle().includes(title)) {
+        console.log(`Deleting "${futureEvents[i].getTitle()}" on ${futureEvents[i].getStartTime()}...`);
+        futureEvents[i].deleteEvent();
+      }      
+    }  
+}
+
 function createEvent(title, startDay, endDay) {
   let eventCreated = false;
 let futureEvents = CalendarApp.getDefaultCalendar().getEvents(new Date(startDay), new Date(endDay));
@@ -181,7 +186,7 @@ let futureEvents = CalendarApp.getDefaultCalendar().getEvents(new Date(startDay)
       }
   }
   if (!eventCreated) {
-  let event = CalendarApp.getDefaultCalendar().createEvent(title, new Date(startDay), new Date(endDay), {guests: "slot700@gmail.com, crosa.wetstein@gmail.com"});
+  let event = CalendarApp.getDefaultCalendar().createEvent(title, new Date(startDay), new Date(endDay), {guests: Session.getActiveUser().getEmail()});
   event.addEmailReminder(1440);
   return true;
     }
