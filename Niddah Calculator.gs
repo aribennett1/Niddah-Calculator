@@ -1,3 +1,6 @@
+
+/*For night, enter the period on the calender as being the day before, so if period was on Halachic Wedndeday Night, still put it on Tuesday Night (Wednesday Night will be halachichly Thursday, and will be day 2 of the count)*/
+
 function main() {
 var today = new Date();
 var sevenDaysAgo = addDays(today, -7);
@@ -5,21 +8,14 @@ var eventsToday = CalendarApp.getDefaultCalendar().getEvents(sevenDaysAgo, today
 for (var i = 0; i < eventsToday.length; i++) {
   var title =  eventsToday[i].getTitle().toLowerCase();
   var color = eventsToday[i].getColor();
-  if ( title == "day period" && color != "2") {
+  if ( (title == "day period" || title == "night period") && color != "2") {
+    title == "day period" ? title = "Day" : title = "Night";
     var periodDate = eventsToday[i].getStartTime();
-    createDayVestBainonis(periodDate);
-    createDayVestHachodesh(periodDate);
-    createDayVestHaflaga(periodDate, "Day Period");
+    createVestBainonis(periodDate, title);
+    createVestHachodesh(periodDate, title);
+    createVestHaflaga(periodDate, title);
     eventsToday[i].setColor("2");
-    Logger.log(`Finished "Day Period"`);    
-  }
-  if (title == "night period" && color != "2") {
-    var periodDate = eventsToday[i].getStartTime();
-    createNightVestBainonis(periodDate);
-    createNightVestHachodesh(periodDate);
-    createNightVestHaflaga(periodDate, "Night Period");
-    eventsToday[i].setColor("2");
-    Logger.log(`Finished "Night Period"`);    
+    Logger.log(`Finished "${title} Period"`);    
   }
   if (title == "hefsek tahara" && color != "2") {
     var hefsekDate = eventsToday[i].getStartTime();
@@ -46,118 +42,89 @@ for (var i = 0; i < eventsToday.length; i++) {
   }
 }
 
-function createDayVestBainonis(_Date) {
+function createVestBainonis(_Date, dORn) {
   var title = "Vest Bainonis";
   deleteEvents(_Date, addDays(_Date, 31), title);
+  if (dORn == "Day") {
   var startDay = addDays(_Date, 29).setHours(6);
-  var endDay = addDays(_Date, 29).setHours(18);
-  createEvent(`Day ${title}`, startDay, endDay);
-  createNightOhrZaruah(startDay, title);
-  createDayVestBedikos(startDay, title);
-  Logger.log(`Created "Day Vest Bainonis"`);
+  var endDay = addDays(_Date, 29).setHours(18);}
+  if (dORn == "Night") {
+  var startDay = addDays(_Date, 29).setHours(18);
+  var endDay = addDays(_Date, 30).setHours(6);}
+  createEvent(`${dORn} ${title}`, startDay, endDay);
+  endOfVest(startDay, title, dORn);
 }
 
-function createDayVestHachodesh(_Date) {
+function createVestHachodesh(_Date, dORn) {
 var title = "Vest Hachodesh";  
 var vhDate = calcVHac(_Date);
+if (dORn == "Day") {
 var startDay = vhDate.setHours(6);
-var endDay = vhDate.setHours(18);
-let success = createEvent(`Day ${title}`, startDay, endDay);
+var endDay = vhDate.setHours(18);}
+if (dORn == "Night") {
+var startDay = vhDate.setHours(18);
+var endDay = vhDate.setHours(30);
+}
+let success = createEvent(`${dORn} ${title}`, startDay, endDay);
 if (success) {
-createNightOhrZaruah(startDay, title);
-createDayVestBedikos(startDay, title);
-Logger.log(`Created "Day Vest Hachodesh"`);}
+endOfVest(startDay, title, dORn);
+}
 }
 
-function createDayVestHaflaga(_Date, nightOrDay) {
+function createVestHaflaga(_Date, dORn) {
   var title = "Vest Haflaga";
-  var intervals = calcVHaf(_Date, nightOrDay);
+  var intervals = calcVHaf(_Date, dORn);
   deleteEvents(_Date, addDays(_Date, intervals[0] + 1),title);  
-  var interval;
+  var interval, startDay, endDay, tempTitle;
   for (var num in intervals) {
   interval = intervals[num];
-  var startDay = addDays(_Date, interval).setHours(6);
-  var endDay = addDays(_Date, interval).setHours(18);
-  createEvent(`Day ${title}`, startDay, endDay);
-  createNightOhrZaruah(startDay, title);
-  createDayVestBedikos(startDay, title);
-  Logger.log(`Created "Day Vest Haflaga"`);
+  tempTitle = `${title} (${interval} day interval)`;
+ if (dORn == "Day") {
+  startDay = addDays(_Date, interval).setHours(6);
+  endDay = addDays(_Date, interval).setHours(18);}
+  if (dORn == "Night") {
+  startDay = addDays(_Date, interval - 1).setHours(18);
+  endDay = addDays(_Date, interval).setHours(6);}
+  createEvent(`${dORn} ${tempTitle}`, startDay, endDay);
+  endOfVest(startDay, tempTitle, dORn);
   }
 }
 
-function createNightOhrZaruah(_Date, title) {
-  var startDay = addDays(_Date, -1).setHours(18);
-  var endDay = addDays(_Date, 0).setHours(6);
-  createEvent(`Night Ohr Zaruah (Day ${title})`, startDay, endDay);
-  Logger.log(`Created "Night Ohr Zaruah"`);
+function endOfVest(startDay, title, dORn) {
+  createOhrZaruah(startDay, title, dORn);
+  createVestBedikos(startDay, title, dORn);
+  Logger.log(`Created "${dORn} ${title}"`);
 }
 
-function createDayVestBedikos(_Date, title) {
+function createOhrZaruah(_Date, title, dORn) {
+  var notDorN;
+  if (dORn == "Day") {
+    notDorN = "Night";
+  var startDay = addDays(_Date, -1).setHours(18);
+  var endDay = addDays(_Date, 0).setHours(6);}
+  if (dORn == "Night") {
+    notDorN = "Day";
+  var startDay = addDays(_Date, 0).setHours(6);
+  var endDay = addDays(_Date, 0).setHours(18);
+  }
+  createEvent(`${notDorN} Ohr Zaruah (${dORn} ${title})`, startDay, endDay)
+  Logger.log(`Created "${dORn} Ohr Zaruah"`);
+}
+
+function createVestBedikos(_Date, title, dORn) {
+  var nightStart = addDays(_Date, 0).setHours(21);
+  var nightEnd = addDays(_Date, 0).setHours(23);
+  if (dORn == "Day") {
   var startDay = addDays(_Date, 0).setHours(7);
   var endDay = addDays(_Date, 0).setHours(9);
   CalendarApp.getDefaultCalendar().createEvent(`1st (Morning) Bedika (${title})`, new Date(startDay), new Date(endDay));
-  startDay = addDays(_Date, 0).setHours(21);
-  endDay = addDays(_Date, 0).setHours(23);
-  CalendarApp.getDefaultCalendar().createEvent(`2nd (Night) Bedika (${title})`, new Date(startDay), new Date(endDay));
-  Logger.log(`Created "Two Day-Vest Bedikos"`);
-}
-
-//NIGHT! For night, enter the period on the calender as being the day before, so if period was on Halachic Wedndeday Night, still put it on Tuesday Night (Wednesday Night will be halachichly Thursday, and will be day 2 of the count)
-
-function createNightVestBainonis(_Date) {
-  var title = "Vest Bainonis";
-  deleteEvents(_Date, addDays(_Date, 31), title); 
-  var startDay = addDays(_Date, 29).setHours(18);
-  var endDay = addDays(_Date, 30).setHours(6);
-  createEvent(`Night ${title}`, startDay, endDay);
-  createDayOhrZaruah(startDay, title);
-  createNightVestBedikos(startDay, title);
-  Logger.log(`Created "Night Vest Bainonis"`);
-}
-
-function createNightVestHachodesh(_Date) {
-  var title = "Vest Hachodesh";
-var vhDate = calcVHac(_Date);
-var startDay = vhDate.setHours(18);
-var endDay = vhDate.setHours(30);
-   let success = createEvent(`Night ${title}`, startDay, endDay);
-  if (success) {
-  createDayOhrZaruah(startDay, title);
-  createNightVestBedikos(startDay, title);
-  Logger.log(`Created "Night Vest Hachodesh"`);}
-}
-
-function createNightVestHaflaga(_Date, nightOrDay) {
-  var title = "Vest Haflaga";
-  var intervals = calcVHaf(_Date, nightOrDay);
-  deleteEvents(_Date, addDays(_Date, intervals[0] + 1), title);
-  var interval;
-  for (var num in intervals) {
-  interval = intervals[num];
-  var startDay = addDays(_Date, interval - 1).setHours(18);
-  var endDay = addDays(_Date, interval).setHours(6);
-  createEvent(`Night ${title}`, startDay, endDay);
-  createDayOhrZaruah(startDay, title);
-  createNightVestBedikos(startDay, title);
-  }
-  Logger.log(`Created "Night Vest Haflaga"`);
-}
-
-function createDayOhrZaruah(_Date, title) {
-  var startDay = addDays(_Date, 0).setHours(6);
-  var endDay = addDays(_Date, 0).setHours(18);
-  createEvent(`Day Ohr Zaruah (Night ${title})`, startDay, endDay);
-  Logger.log(`Created "Day Ohr Zaruah"`);
-}
-
-function createNightVestBedikos(_Date, title) {
-  var startDay = addDays(_Date, 0).setHours(21);
-  var endDay = addDays(_Date, 0).setHours(23);
-  CalendarApp.getDefaultCalendar().createEvent(`1st (Night) Bedika (${title})`, new Date(startDay), new Date(endDay));
-  startDay = addDays(startDay, 1).setHours(7);
-  endDay = addDays(endDay, 1).setHours(9);
-  CalendarApp.getDefaultCalendar().createEvent(`2nd (Morning) Bedika (${title})`, new Date(startDay), new Date(endDay));
-  Logger.log(`Created "Two Night-Vest Bedikos"`);
+  CalendarApp.getDefaultCalendar().createEvent(`2nd (Night) Bedika (${title})`, new Date(nightStart), new Date(nightEnd));}
+  if (dORn == "Night") {
+  CalendarApp.getDefaultCalendar().createEvent(`1st (Night) Bedika (${title})`, new Date(nightStart), new Date(nightEnd));
+   var startDay = addDays(nightStart, 1).setHours(7);
+  var endDay = addDays(nightEnd, 1).setHours(9);
+  CalendarApp.getDefaultCalendar().createEvent(`2nd (Morning) Bedika (${title})`, new Date(startDay), new Date(endDay));}
+  Logger.log(`Created "Two ${dORn}-Vest Bedikos"`);
 }
 
 function deleteEvents(startDay, endDay, title) {
@@ -180,7 +147,7 @@ let futureEvents = CalendarApp.getDefaultCalendar().getEvents(new Date(startDay)
       }
   }
   if (!eventCreated) {
-  let event = CalendarApp.getDefaultCalendar().createEvent(title, new Date(startDay), new Date(endDay), {guests: Session.getActiveUser().getEmail()});
+  let event = CalendarApp.getDefaultCalendar().createEvent(title, new Date(startDay), new Date(endDay), {guests: "slot700@gmail.com, crosa.wetstein@gmail.com"});
   event.addEmailReminder(1440);
   return true;
     }
@@ -220,13 +187,12 @@ function calcShekiyah(_Date) {
   var hour = response.substring(0, 2);
   var minute = response.substring(3, 5);
   var second = response.substring(6, 8);
-  // console.log(`hour: ${hour}, minute: ${minute}, second: ${second}`);
   englishYearMonthDay[1]--;
   var shekiyah = new Date(englishYearMonthDay[0], englishYearMonthDay[1], englishYearMonthDay[2], hour, minute, second);
   return shekiyah;
 }
 
-function calcVHaf(_Date, nightOrDay) {
+function calcVHaf(_Date, dORn) {
 var prevPeriodTime = "Not yet set";
 var prevPeriod = _Date;
 var startDay = addDays(_Date, -120);
@@ -242,7 +208,7 @@ var prevEvents = CalendarApp.getDefaultCalendar().getEvents(startDay, endDay);
     }  
  var diffTime = Math.abs(prevPeriod - _Date); 
  var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
- if (prevPeriodTime == "day period" && nightOrDay == "Night Period") {
+ if (prevPeriodTime == "day period" && dORn == "Night") {
         diffDays++;
       }
 console.log("diffDays: ", diffDays); 
