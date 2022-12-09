@@ -3,7 +3,7 @@
 
 function main() {
 var today = new Date();
-var sevenDaysAgo = addDays(today, -7);
+var sevenDaysAgo = addDays(today, -17);
 var eventsToday = CalendarApp.getDefaultCalendar().getEvents(sevenDaysAgo, today);
 for (var i = 0; i < eventsToday.length; i++) {
   var title =  eventsToday[i].getTitle().toLowerCase();
@@ -80,11 +80,11 @@ function createVestHaflaga(_Date, dORn) {
   interval = intervals[num];
   tempTitle = `${title} (${interval} day interval)`;
  if (dORn == "Day") {
-  startDay = addDays(_Date, interval).setHours(6);
-  endDay = addDays(_Date, interval).setHours(18);}
+  startDay = addDays(_Date, interval - 1).setHours(6);
+  endDay = addDays(_Date, interval - 1).setHours(18);}
   if (dORn == "Night") {
-  startDay = addDays(_Date, interval - 1).setHours(18);
-  endDay = addDays(_Date, interval).setHours(6);}
+  startDay = addDays(_Date, interval - 2).setHours(18);
+  endDay = addDays(_Date, interval - 1).setHours(6);}
   createEvent(`${dORn} ${tempTitle}`, startDay, endDay);
   endOfVest(startDay, tempTitle, dORn);
   }
@@ -147,7 +147,7 @@ let futureEvents = CalendarApp.getDefaultCalendar().getEvents(new Date(startDay)
       }
   }
   if (!eventCreated) {
-  let event = CalendarApp.getDefaultCalendar().createEvent(title, new Date(startDay), new Date(endDay), {guests: "[EMAILS REMOVED]"});
+  let event = CalendarApp.getDefaultCalendar().createEvent(title, new Date(startDay), new Date(endDay), {guests: "slot700@gmail.com, crosa.wetstein@gmail.com"});
   event.addEmailReminder(1440);
   return true;
     }
@@ -207,9 +207,12 @@ var prevEvents = CalendarApp.getDefaultCalendar().getEvents(startDay, endDay);
       }      
     }  
  var diffTime = Math.abs(prevPeriod - _Date); 
- var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+ var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
  if (prevPeriodTime == "day period" && dORn == "Night") {
         diffDays++;
+      }
+ if (prevPeriodTime == "night period" && dORn == "Day") {
+        diffDays--;
       }
 console.log("diffDays: ", diffDays); 
 //USE TO RESET INTERVAL ARRAY, COMMENT OUT REST OF FUNCTION
