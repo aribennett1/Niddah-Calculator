@@ -207,7 +207,7 @@ var prevEvents = CalendarApp.getDefaultCalendar().getEvents(startDay, endDay);
       }      
     }  
  var diffTime = Math.abs(prevPeriod - _Date); 
- var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+ var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
  if (prevPeriodTime == "day period" && dORn == "Night") {
         diffDays++;
       }
