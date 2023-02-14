@@ -267,7 +267,7 @@ function calcVHac(_Date) {
 }
 
 function getNextHebrewMonth(month) {
-  var months = ["Nisan", "Iyyar", "Sivan", "Tamuz", "Av", "Elul", "Tishrei", "Cheshvan", "Kislev", "Tevet", "Shvat", "Adar", "Adar1", "Adar2"];
+  var months = ["Nisan", "Iyyar", "Sivan", "Tamuz", "Av", "Elul", "Tishrei", "Cheshvan", "Kislev", "Tevet", "Sh'vat", "Adar", "Adar1", "Adar2"];
   if (month == "Shvat") {
     return "Adar1";
   }
