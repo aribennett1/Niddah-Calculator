@@ -112,18 +112,21 @@ function createOhrZaruah(_Date, title, dORn) {
 }
 
 function createVestBedikos(_Date, title, dORn) {
-  var nightStart = addDays(_Date, 0).setHours(21);
-  var nightEnd = addDays(_Date, 0).setHours(23);
+  var start, end;
   if (dORn == "Day") {
-  var startDay = addDays(_Date, 0).setHours(7);
-  var endDay = addDays(_Date, 0).setHours(9);
-  CalendarApp.getDefaultCalendar().createEvent(`1st (Morning) Bedika (${title})`, new Date(startDay), new Date(endDay));
-  CalendarApp.getDefaultCalendar().createEvent(`2nd (Night) Bedika (${title})`, new Date(nightStart), new Date(nightEnd));}
+  start = addDays(_Date, 0).setHours(7);
+  end = addDays(_Date, 0).setHours(9);
+  CalendarApp.getDefaultCalendar().createEvent(`1st Bedika (${title})`, new Date(start), new Date(end));
+  start = addDays(_Date, 0).setHours(15);
+  end = addDays(_Date, 0).setHours(17);
+  CalendarApp.getDefaultCalendar().createEvent(`2nd Bedika (${title})`, new Date(start), new Date(end));}
   if (dORn == "Night") {
-  CalendarApp.getDefaultCalendar().createEvent(`1st (Night) Bedika (${title})`, new Date(nightStart), new Date(nightEnd));
-   var startDay = addDays(nightStart, 1).setHours(7);
-  var endDay = addDays(nightEnd, 1).setHours(9);
-  CalendarApp.getDefaultCalendar().createEvent(`2nd (Morning) Bedika (${title})`, new Date(startDay), new Date(endDay));}
+  start = addDays(_Date, 0).setHours(18);
+  end = addDays(_Date, 0).setHours(21);
+  CalendarApp.getDefaultCalendar().createEvent(`1st Bedika (${title})`, new Date(start), new Date(end));
+  start = addDays(_Date, 1).setHours(3);
+  end = addDays(_Date, 1).setHours(6);
+  CalendarApp.getDefaultCalendar().createEvent(`2nd Bedika (${title})`, new Date(start), new Date(end));}
   Logger.log(`Created "Two ${dORn}-Vest Bedikos"`);
 }
 
@@ -147,7 +150,7 @@ let futureEvents = CalendarApp.getDefaultCalendar().getEvents(new Date(startDay)
       }
   }
   if (!eventCreated) {
-  let event = CalendarApp.getDefaultCalendar().createEvent(title, new Date(startDay), new Date(endDay), {guests: "[EMAILS REMOVED]"});
+  let event = CalendarApp.getDefaultCalendar().createEvent(title, new Date(startDay), new Date(endDay), {guests: "slot700@gmail.com, crosa.wetstein@gmail.com"});
   event.addEmailReminder(1440);
   return true;
     }
@@ -268,7 +271,7 @@ function calcVHac(_Date) {
 
 function getNextHebrewMonth(month) {
   var months = ["Nisan", "Iyyar", "Sivan", "Tamuz", "Av", "Elul", "Tishrei", "Cheshvan", "Kislev", "Tevet", "Sh'vat", "Adar", "Adar1", "Adar2"];
-  if (month == "Shvat") {
+  if (month == "Sh'vat") {
     return "Adar1";
   }
   if (month == "Adar") {
