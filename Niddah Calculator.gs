@@ -150,7 +150,7 @@ let futureEvents = CalendarApp.getDefaultCalendar().getEvents(new Date(startDay)
       }
   }
   if (!eventCreated) {
-  let event = CalendarApp.getDefaultCalendar().createEvent(title, new Date(startDay), new Date(endDay), {guests: "slot700@gmail.com, crosa.wetstein@gmail.com"});
+  let event = CalendarApp.getDefaultCalendar().createEvent(title, new Date(startDay), new Date(endDay), {guests: "[EMAILS REMOVED]"});
   event.addEmailReminder(1440);
   return true;
     }
