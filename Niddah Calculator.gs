@@ -29,12 +29,25 @@ for (var i = 0; i < eventsToday.length; i++) {
   if (title == "remove hefsek tahara") {
     var removedEvents = 0;
     var eightDaysFromNow = addDays(today, 8);
-    var hefsekEvents = CalendarApp.getDefaultCalendar().getEvents(sevenDaysAgo, eightDaysFromNow);
-    for (var j = 0; j < hefsekEvents.length; j++) {
-    var hefsekTitle = hefsekEvents[j].getTitle().toLowerCase();
+    var haflagaEvents = CalendarApp.getDefaultCalendar().getEvents(sevenDaysAgo, eightDaysFromNow);
+    for (var j = 0; j < haflagaEvents.length; j++) {
+    var hefsekTitle = haflagaEvents[j].getTitle().toLowerCase();
     if (hefsekTitle == "remove hefsek tahara" || hefsekTitle.substring(0, 8) == "bedika #" || hefsekTitle == "hefsek tahara" || hefsekTitle == "mikvah night") {
       removedEvents++;
-      hefsekEvents[j].deleteEvent();
+      haflagaEvents[j].deleteEvent();
+        }
+     }
+     Logger.log(`Removed ${removedEvents} Events`);
+   }
+   if (title == "remove vest haflaga") {
+    var removedEvents = 0;
+    var _75DaysFromNow = addDays(today, 75);
+    var haflagaEvents = CalendarApp.getDefaultCalendar().getEvents(sevenDaysAgo, _75DaysFromNow);
+    for (var j = 0; j < haflagaEvents.length; j++) {
+    var hefsekTitle = haflagaEvents[j].getTitle().toLowerCase();
+    if (hefsekTitle == "remove vest haflaga" || hefsekTitle.toLowerCase().includes("vest haflaga")) {
+      removedEvents++;
+      haflagaEvents[j].deleteEvent();
         }
      }
      Logger.log(`Removed ${removedEvents} Events`);
@@ -45,6 +58,7 @@ for (var i = 0; i < eventsToday.length; i++) {
 function createVestBainonis(_Date, dORn) {
   var title = "Vest Bainonis";
   deleteEvents(_Date, addDays(_Date, 31), title);
+  deleteEvents(_Date, addDays(_Date, 31), "Chavos Daas");
   if (dORn == "Day") {
   var startDay = addDays(_Date, 29).setHours(6);
   var endDay = addDays(_Date, 29).setHours(18);}
@@ -52,6 +66,9 @@ function createVestBainonis(_Date, dORn) {
   var startDay = addDays(_Date, 29).setHours(18);
   var endDay = addDays(_Date, 30).setHours(6);}
   createEvent(`${dORn} ${title}`, startDay, endDay);
+  createPlacy(startDay, dORn);
+  createEvent("Chavos Daas", addDays(startDay,1), addDays(endDay, 1));
+  createVestBedikos(addDays(startDay,1), "Chavos Daas", dORn);
   endOfVest(startDay, title, dORn);
 }
 
@@ -74,7 +91,9 @@ endOfVest(startDay, title, dORn);
 function createVestHaflaga(_Date, dORn) {
   var title = "Vest Haflaga";
   var intervals = calcVHaf(_Date, dORn);
-  deleteEvents(_Date, addDays(_Date, intervals[0] + 1),title);  
+  console.log("intervals:" + intervals);
+  if (interval != null) {
+  deleteEvents(_Date, addDays(_Date, intervals[0] + 1),title);}
   var interval, startDay, endDay, tempTitle;
   for (var num in intervals) {
   interval = intervals[num];
@@ -90,10 +109,25 @@ function createVestHaflaga(_Date, dORn) {
   }
 }
 
+function createPlacy(_Date, dORn) {
+  deleteEvents(addDays(_Date, -31), addDays(_Date, 3), "Placy");
+  const notDorN = dORn == "Day" ? "Night" : "Day";
+  if (notDorN == "Day") {
+  var startDay = addDays(_Date, 0).setHours(6);
+  var endDay = addDays(_Date, 0).setHours(18);}
+  if (notDorN == "Night") {
+  var startDay = addDays(_Date, -1).setHours(18);
+  var endDay = addDays(_Date, 0).setHours(6);}
+  createEvent(`${notDorN} Placy`, startDay, endDay);
+  createVestBedikos(startDay, "Placy", notDorN);
+  console.log(`Created "${notDorN} Placy"`);
+  }
+
 function endOfVest(startDay, title, dORn) {
-  createOhrZaruah(startDay, title, dORn);
+  if (!title.includes("Bainonis")) {
+  createOhrZaruah(startDay, title, dORn);}
   createVestBedikos(startDay, title, dORn);
-  Logger.log(`Created "${dORn} ${title}"`);
+  console.log(`Created "${dORn} ${title}"`);
 }
 
 function createOhrZaruah(_Date, title, dORn) {
@@ -113,21 +147,27 @@ function createOhrZaruah(_Date, title, dORn) {
 
 function createVestBedikos(_Date, title, dORn) {
   var start, end;
+  const isVestBainonis = title.includes("Bainonis");
+  var beg = isVestBainonis ? "1st Bedika" : "Bedika";
   if (dORn == "Day") {
   start = addDays(_Date, 0).setHours(7);
   end = addDays(_Date, 0).setHours(9);
-  CalendarApp.getDefaultCalendar().createEvent(`1st Bedika (${title})`, new Date(start), new Date(end));
+  CalendarApp.getDefaultCalendar().createEvent(`${beg} (${title})`, new Date(start), new Date(end));
+  if (isVestBainonis) {
   start = addDays(_Date, 0).setHours(15);
   end = addDays(_Date, 0).setHours(17);
   CalendarApp.getDefaultCalendar().createEvent(`2nd Bedika (${title})`, new Date(start), new Date(end));}
+  }
   if (dORn == "Night") {
   start = addDays(_Date, 0).setHours(18);
   end = addDays(_Date, 0).setHours(21);
-  CalendarApp.getDefaultCalendar().createEvent(`1st Bedika (${title})`, new Date(start), new Date(end));
+  CalendarApp.getDefaultCalendar().createEvent(`${beg} (${title})`, new Date(start), new Date(end));
+  if (isVestBainonis) {
   start = addDays(_Date, 1).setHours(3);
   end = addDays(_Date, 1).setHours(6);
   CalendarApp.getDefaultCalendar().createEvent(`2nd Bedika (${title})`, new Date(start), new Date(end));}
-  Logger.log(`Created "Two ${dORn}-Vest Bedikos"`);
+  }
+  console.log(isVestBainonis ? `Created "Two ${dORn} ${title} Bedikos"` : `Created "${dORn} ${title} Bedika"`);
 }
 
 function deleteEvents(startDay, endDay, title) {
@@ -141,16 +181,16 @@ function deleteEvents(startDay, endDay, title) {
 }
 
 function createEvent(title, startDay, endDay) {
-  let eventCreated = false;
+  let eventAlreadyCreated = false;
 let futureEvents = CalendarApp.getDefaultCalendar().getEvents(new Date(startDay), new Date(endDay));
   for (var i in futureEvents) {
       if (futureEvents[i].getTitle().includes(title)) {
-        eventCreated = true;
+        eventAlreadyCreated = true;
         break;
       }
   }
-  if (!eventCreated) {
-  let event = CalendarApp.getDefaultCalendar().createEvent(title, new Date(startDay), new Date(endDay), {guests: "[EMAILS REMOVED]"});
+  if (!eventAlreadyCreated) {
+  let event = CalendarApp.getDefaultCalendar().createEvent(title, new Date(startDay), new Date(endDay), {guests: [EMAILS REMOVED]});
   event.addEmailReminder(1440);
   return true;
     }
@@ -177,23 +217,15 @@ function create14Bedikos(_Date) {
     CalendarApp.getDefaultCalendar().createEvent(`Bedika # ${i}`, new Date(startDay), new Date(endDay));
     day++;
   }
-Logger.log("Created 14 Bedika events");
+console.log("Created 14 Bedika events");
 }
 
 function calcShekiyah(_Date) {
   var englishYearMonthDay = getYearMonthDay(_Date);
-  var url = `https://www.hebcal.com/zmanim?cfg=json&zip=21209&date=${englishYearMonthDay[0]}-${englishYearMonthDay[1]}-${englishYearMonthDay[2]}`;
-  var response = UrlFetchApp.fetch(url).getContentText();  
-  response = response.substring(response.indexOf("sunset"));
-  response = response.substring(response.indexOf("T") + 1);
-  console.log(response);
-  var hour = response.substring(0, 2);
-  var minute = response.substring(3, 5);
-  var second = response.substring(6, 8);
-  englishYearMonthDay[1]--;
-  var shekiyah = new Date(englishYearMonthDay[0], englishYearMonthDay[1], englishYearMonthDay[2], hour, minute, second);
-  return shekiyah;
+  var response = JSON.parse(UrlFetchApp.fetch(`https://www.hebcal.com/zmanim?cfg=json&zip=21209&date=${englishYearMonthDay[0]}-${englishYearMonthDay[1]}-${englishYearMonthDay[2]}`).getContentText());
+  return new Date(response.times.sunset);
 }
+
 
 function calcVHaf(_Date, dORn) {
 var prevPeriodTime = "Not yet set";
@@ -202,11 +234,12 @@ var startDay = addDays(_Date, -120);
 var endDay = addDays(_Date, -3);
 var prevEvents = CalendarApp.getDefaultCalendar().getEvents(startDay, endDay);
   for (var i = 0; i < prevEvents.length; i++) {
-      if (prevEvents[i].getTitle().toLowerCase() == "day period" ||  prevEvents[i].getTitle().toLowerCase() == "night period") {        
-        prevPeriod = prevEvents[i].getStartTime();
-        console.log("prevPeriod: " + prevPeriod);
-        prevPeriodTime = prevEvents[i].getTitle().toLowerCase();
-        console.log("prevPeriodTime: " + prevPeriodTime);
+    var title = prevEvents[i].getTitle().toLowerCase();
+      if (title == "day period" || title == "night period") {        
+        prevPeriod = prevEvents[i].getStartTime();        
+        prevPeriodTime = title;
+        console.log(`prevPeriod: ${prevPeriod}`);
+        console.log(`prevPeriodTime: ${prevPeriodTime}`);
       }      
     }  
  var diffTime = Math.abs(prevPeriod - _Date); 
@@ -224,7 +257,7 @@ console.log("diffDays: ", diffDays);
 // intervals = JSON.stringify(intervals);
 // PropertiesService.getScriptProperties().setProperty("intervals", intervals);
 // console.log("intervals: " + intervals);
-
+if (diffDays > 7) {
 var intervals = JSON.parse(PropertiesService.getScriptProperties().getProperty("intervals"));
 console.log("intervals: " + intervals);
   for (var num = intervals.length - 1; num >= 0; num--) {
@@ -245,29 +278,25 @@ let jintervals = JSON.stringify(intervals);
 PropertiesService.getScriptProperties().setProperty("intervals", jintervals);
 return intervals;
 }
+return [];
+}
 
 function calcVHac(_Date) {
   var englishYearMonthDay = getYearMonthDay(_Date);
-  var url = `https://www.hebcal.com/converter?cfg=json&gy=${englishYearMonthDay[0]}&gm=${englishYearMonthDay[1]}&gd=${englishYearMonthDay[2]}&g2h=1`;
-  var response = UrlFetchApp.fetch(url).getContentText();
-  var hebrewYear = response.substring(response.indexOf(`"hy":`) + 5, response.indexOf(`,"hm":`));
-  var hebrewMonth = response.substring(response.indexOf(`"hm":"`) + 6, response.indexOf(`","hd":`));
-  hebrewMonth = getNextHebrewMonth(hebrewMonth);
-  var hebrewDay = response.substring(response.indexOf(`"hd":`) + 5, response.indexOf(`,"hebrew":`));
-  if (hebrewDay.toString().length != 2) {
-    hebrewDay = "0" + hebrewDay;
-  }
-  if (hebrewMonth == "Tishrei") {
+  let response = JSON.parse(UrlFetchApp.fetch(`https://www.hebcal.com/converter?cfg=json&gy=${englishYearMonthDay[0]}&gm=${englishYearMonthDay[1]}&gd=${englishYearMonthDay[2]}&g2h=1`).getContentText());
+  var hebrewYear = response.hy;
+  var hebrewMonth = getNextHebrewMonth(response.hm);
+  var hebrewDay = response.hd.toString().padStart(2, '0');
+
+  if (hebrewMonth === "Tishrei") {
     hebrewYear = parseInt(hebrewYear) + 1;
   }
-  url = `https://www.hebcal.com/converter?cfg=json&hy=${hebrewYear}&hm=${hebrewMonth}&hd=${hebrewDay}&h2g=1`;
-  response = UrlFetchApp.fetch(url).getContentText();
-  var vhYear = response.substring(response.indexOf(`"gy":`) + 5, response.indexOf(`,"gm":`));
-  var vhMonth = response.substring(response.indexOf(`"gm":`) + 5, response.indexOf(`,"gd":`))
-  vhMonth = parseInt(vhMonth) - 1;
-  var vhDay = response.substring(response.indexOf(`"gd":`) + 5, response.indexOf(`,"afterSunset"`));
-  return new Date(vhYear, vhMonth, vhDay);
+
+  response = JSON.parse(UrlFetchApp.fetch(`https://www.hebcal.com/converter?cfg=json&hy=${hebrewYear}&hm=${hebrewMonth}&hd=${hebrewDay}&h2g=1`).getContentText());
+
+  return new Date(response.gy, parseInt(response.gm) - 1, response.gd);
 }
+
 
 function getNextHebrewMonth(month) {
   var months = ["Nisan", "Iyyar", "Sivan", "Tamuz", "Av", "Elul", "Tishrei", "Cheshvan", "Kislev", "Tevet", "Sh'vat", "Adar", "Adar1", "Adar2"];
@@ -290,18 +319,7 @@ function getNextHebrewMonth(month) {
   }
 }
 
-function getYearMonthDay(_Date) {
-  var year = _Date.getFullYear();
-  var month = _Date.getMonth() + 1;
-  if (month.toString().length != 2) {
-    month = "0" + month;
-  }
-  var day = _Date.getDate();
-  if (day.toString().length != 2) {
-    day = "0" + day;
-  }
-  return [year, month, day];
-}
+const getYearMonthDay = (_Date) => [_Date.getFullYear(), String(_Date.getMonth() + 1).padStart(2, '0'), String(_Date.getDate()).padStart(2, '0')];
 
 function addDays(date, days) {
   var result = new Date(date);
