@@ -11,41 +11,41 @@ function main() {
     var color = event.getColor();
     if ((title == "day period" || title == "night period") && color != "2") {
       title == "day period" ? title = "Day" : title = "Night";
-      var periodDate = eventsToday[i].getStartTime();
+      var periodDate = event.getStartTime();
       createVestBainonis(periodDate, title);
       createVestHachodesh(periodDate, title);
       createVestHaflaga(periodDate, title);
-      eventsToday[i].setColor("2");
+      event.setColor("2");
       console.log(`Finished "${title} Period"`);
     }
     if (title == "hefsek tahara" && color != "2") {
-      var hefsekDate = eventsToday[i].getStartTime();
+      var hefsekDate = event.getStartTime();
       create14Bedikos(hefsekDate);
       var mikNightStart = addDays(hefsekDate, 7).setHours(6, 0);
       var mikNightEnd = addDays(hefsekDate, 7).setHours(18, 0);
       createEvent("Mikvah Night", new Date(mikNightStart), new Date(mikNightEnd), true);
-      eventsToday[i].setColor("2");
+      event.setColor("2");
       console.log(`Finished "Hefsek Tahara"`);
     }
     if (title == "remove hefsek tahara") {
       var eightDaysFromNow = addDays(today, 8);
-      var events = CalendarApp.getDefaultCalendar().getEvents(tenDaysAgo, eightDaysFromNow);
-      events.forEach(event => {
-        var hefsekTitle = haflagaEvent.getTitle().toLowerCase();
+      var htEvents = CalendarApp.getDefaultCalendar().getEvents(tenDaysAgo, eightDaysFromNow);
+      htEvents.forEach(htEvent => {
+        var hefsekTitle = htEvent.getTitle().toLowerCase();
         if (hefsekTitle == "remove hefsek tahara" || hefsekTitle.substring(0, 8) == "bedika #" || hefsekTitle == "hefsek tahara" || hefsekTitle == "mikvah night") {
           removedEvents++;
-          event.deleteEvent();
+          htEvent.deleteEvent();
         }
-      });      
+      });
     }
-    if (title.toLowerCase() == "remove vests") {
+    if (title == "remove vests") {
       var _150DaysFromNow = addDays(today, 150);
-      var events = CalendarApp.getDefaultCalendar().getEvents(eventsToday[i].getAllDayStartDate(), _150DaysFromNow);
-      events.forEach(event => {
+      var vestEvents = CalendarApp.getDefaultCalendar().getEvents(eventsToday[i].getAllDayStartDate(), _150DaysFromNow);
+      vestEvents.forEach(vestEvent => {
         var hefsekTitle = event.getTitle().toLowerCase();
         if (hefsekTitle.toLowerCase() == "remove vests" || hefsekTitle.toLowerCase().includes("vest haflaga") || hefsekTitle.toLowerCase().includes("placy") || hefsekTitle.toLowerCase().includes("vest hachodesh") || hefsekTitle.toLowerCase().includes("vest bainonis") || hefsekTitle.toLowerCase().includes("chavos daas")) {
           removedEvents++;
-          event.deleteEvent();
+          vestEvent.deleteEvent();
         }
       });
     }
@@ -58,13 +58,13 @@ function createVestBainonis(_Date, dORn) {
   var title = "Vest Bainonis";
   deleteEvents(_Date, addDays(_Date, 31), title);
   deleteEvents(_Date, addDays(_Date, 31), "Chavos Daas");
+  var startDay, endDay;
   if (dORn == "Day") {
-    var startDay = addDays(_Date, 29).setHours(6);
-    var endDay = addDays(_Date, 29).setHours(18);
-  }
-  if (dORn == "Night") {
-    var startDay = addDays(_Date, 29).setHours(18);
-    var endDay = addDays(_Date, 30).setHours(6);
+    startDay = addDays(_Date, 29).setHours(6);
+    endDay = addDays(_Date, 29).setHours(18);
+  } else {
+    startDay = addDays(_Date, 29).setHours(18);
+    endDay = addDays(_Date, 30).setHours(6);
   }
   createEvent(`${dORn} ${title}`, startDay, endDay);
   createPlacy(startDay, dORn);
@@ -76,16 +76,15 @@ function createVestBainonis(_Date, dORn) {
 function createVestHachodesh(_Date, dORn) {
   var title = "Vest Hachodesh";
   var vhDate = calcVHac(_Date);
-  if (dORn == "Day") {
-    var startDay = vhDate.setHours(6);
-    var endDay = vhDate.setHours(18);
+  var startDay, endDay;
+  if (dORn === "Day") {
+    startDay = vhDate.setHours(6);
+    endDay = vhDate.setHours(18);
+  } else {
+    startDay = vhDate.setHours(18);
+    endDay = vhDate.setHours(30);
   }
-  if (dORn == "Night") {
-    var startDay = vhDate.setHours(18);
-    var endDay = vhDate.setHours(30);
-  }
-  let success = createEvent(`${dORn} ${title}`, startDay, endDay);
-  if (success) {
+  if (createEvent(`${dORn} ${title}`, startDay, endDay)) {
     endOfVest(startDay, title, dORn);
   }
 }
@@ -94,36 +93,35 @@ function createVestHaflaga(_Date, dORn) {
   var title = "Vest Haflaga";
   var intervals = calcVHaf(_Date, dORn);
   console.log("intervals:" + intervals);
-  if (intervals != null) {
+  if (intervals) {
     deleteEvents(_Date, addDays(_Date, intervals[0] + 1), title);
   }
-  var interval, startDay, endDay, tempTitle;
-  for (var num in intervals) {
-    interval = intervals[num];
-    tempTitle = `${title} (${interval} day interval)`;
+  let startDay, endDay;
+  intervals.forEach(interval => {
+    const tempTitle = `${title} (${interval} day interval)`;
     if (dORn == "Day") {
       startDay = addDays(_Date, interval).setHours(6);
       endDay = addDays(_Date, interval).setHours(18);
     }
     if (dORn == "Night") {
-      startDay = addDays(_Date, interval -1).setHours(18);
+      startDay = addDays(_Date, interval - 1).setHours(18);
       endDay = addDays(_Date, interval).setHours(6);
     }
     createEvent(`${dORn} ${tempTitle}`, startDay, endDay);
     endOfVest(startDay, tempTitle, dORn);
-  }
+  });
 }
 
 function createPlacy(_Date, dORn) {
   deleteEvents(addDays(_Date, -31), addDays(_Date, 3), "Placy");
   const notDorN = dORn == "Day" ? "Night" : "Day";
-  if (notDorN == "Day") {
-    var startDay = addDays(_Date, 1).setHours(6);
-    var endDay = addDays(_Date, 1).setHours(18);
-  }
-  if (notDorN == "Night") {
-    var startDay = addDays(_Date, 0).setHours(18);
-    var endDay = addDays(_Date, 1).setHours(6);
+  let startDay, endDay;
+  if (notDorN === "Day") {
+    startDay = addDays(_Date, 1).setHours(6);
+    endDay = addDays(_Date, 1).setHours(18);
+  } else {
+    startDay = addDays(_Date, 0).setHours(18);
+    endDay = addDays(_Date, 1).setHours(6);
   }
   createEvent(`${notDorN} Placy`, startDay, endDay);
   createVestBedikos(startDay, "Placy", notDorN);
@@ -139,43 +137,40 @@ function endOfVest(startDay, title, dORn) {
 }
 
 function createOhrZaruah(_Date, title, dORn) {
-  var notDorN;
+  let notDorN, startDay, endDay;
   if (dORn == "Day") {
     notDorN = "Night";
-    var startDay = addDays(_Date, -1).setHours(18);
-    var endDay = addDays(_Date, 0).setHours(6);
+    startDay = addDays(_Date, -1).setHours(18);
+    endDay = addDays(_Date, 0).setHours(6);
   }
   if (dORn == "Night") {
     notDorN = "Day";
-    var startDay = addDays(_Date, 0).setHours(6);
-    var endDay = addDays(_Date, 0).setHours(18);
+    startDay = addDays(_Date, 0).setHours(6);
+    endDay = addDays(_Date, 0).setHours(18);
   }
   createEvent(`${notDorN} Ohr Zaruah (${dORn} ${title})`, startDay, endDay)
   console.log(`Created "${dORn} Ohr Zaruah"`);
 }
 
 function createVestBedikos(_Date, title, dORn) {
-  var start, end;
   const isVestBainonis = title.includes("Bainonis");
   var beg = isVestBainonis ? "1st Bedika" : "Bedika";
-  if (dORn == "Day") {
-    start = addDays(_Date, 0).setHours(7);
-    end = addDays(_Date, 0).setHours(9);
-    createEvent(`${beg} (${title})`, new Date(start), new Date(end), true);
-    if (isVestBainonis) {
-      start = addDays(_Date, 0).setHours(15);
-      end = addDays(_Date, 0).setHours(17);
-      createEvent(`2nd Bedika (${title})`, new Date(start), new Date(end), true);
-    }
+
+function createBedikaEvent(startHour, endHour, label, daysToAdd = 0) {
+    const start = new Date(addDays(_Date, daysToAdd).setHours(startHour));
+    const end = new Date(addDays(_Date, daysToAdd).setHours(endHour));
+    createEvent(`${label} (${title})`, start, end, true);
   }
-  if (dORn == "Night") {
-    start = addDays(_Date, 0).setHours(18);
-    end = addDays(_Date, 0).setHours(21);
-    createEvent(`${beg} (${title})`, new Date(start), new Date(end), true);
+
+  if (dORn === "Day") {
+    createBedikaEvent(7, 9, beg);
     if (isVestBainonis) {
-      start = addDays(_Date, 1).setHours(3);
-      end = addDays(_Date, 1).setHours(6);
-      createEvent(`2nd Bedika (${title})`, new Date(start), new Date(end), true);
+      createBedikaEvent(15, 17, "2nd Bedika");
+    }
+  } else if (dORn === "Night") {
+    createBedikaEvent(18, 21, beg);
+    if (isVestBainonis) {
+      createBedikaEvent(3, 6, "2nd Bedika", 1);
     }
   }
   console.log(isVestBainonis ? `Created "Two ${dORn} ${title} Bedikos"` : `Created "${dORn} ${title} Bedika"`);
@@ -183,37 +178,34 @@ function createVestBedikos(_Date, title, dORn) {
 
 function deleteEvents(startDay, endDay, title) {
   let futureEvents = CalendarApp.getDefaultCalendar().getEvents(startDay, endDay);
-  for (var i in futureEvents) {
-    if (futureEvents[i].getTitle().includes(title)) {
-      console.log(`Deleting "${futureEvents[i].getTitle()}" on ${futureEvents[i].getStartTime()}...`);
-      futureEvents[i].deleteEvent();
+  futureEvents.forEach(event => {
+    if (event.getTitle().includes(title)) {
+      console.log(`Deleting "${event.getTitle()}" on ${event.getStartTime()}...`);
+      event.deleteEvent();
       removedEvents++;
     }
-  }
+  });
 }
 
 function createEvent(title, startDay, endDay, noGuests = false) {
-  let eventAlreadyCreated = false;
-  let futureEvents = CalendarApp.getDefaultCalendar().getEvents(new Date(startDay), new Date(endDay));
-  for (var i in futureEvents) {
-    if (futureEvents[i].getTitle().includes(title)) {
-      eventAlreadyCreated = true;
-      break;
-    }
-  }
+  const calendar = CalendarApp.getDefaultCalendar();
+  
+  const events = calendar.getEvents(new Date(startDay), new Date(endDay));
+  const eventAlreadyCreated = events.some(event => event.getTitle().includes(title));
+  
   if (!eventAlreadyCreated) {
-    eventsCreated++;
-    if (noGuests) {
-      CalendarApp.getDefaultCalendar().createEvent(title, new Date(startDay), new Date(endDay));
+     if (noGuests) {
+      calendar.createEvent(title, new Date(startDay), new Date(endDay));
     }
     else {
-      let event = CalendarApp.getDefaultCalendar().createEvent(title, new Date(startDay), new Date(endDay), { guests: [EMAILS REMOVED] });
+      let event = calendar.createEvent(title, new Date(startDay), new Date(endDay), { guests: [EMAILS REMOVED] });
       event.addEmailReminder(1440);
     }
+    eventsCreated++;    
+    console.log(`Created event "${title}" from ${new Date(startDay)} to ${new Date(endDay)}`);
     return true;
-  }
-  else {
-    console.log(`Didn't create ${title}, event already present on date (${startDay})`);
+  } else {
+    console.log(`Didn't create "${title}", event already present between ${new Date(startDay)} and ${new Date(endDay)}`);
     return false;
   }
 }
@@ -227,7 +219,7 @@ function create14Bedikos(_Date) {
     day++;
   }
   day = 1;
-  var afternoon = calcShekiyah(_Date);
+  var afternoon = getShekiyah(_Date);
   for (var i = 2; i <= 14; i += 2) {
     var startDay = addDays(afternoon, day);
     startDay = (startDay.getTime() - (30 * 60000));
@@ -238,12 +230,11 @@ function create14Bedikos(_Date) {
   console.log("Created 14 Bedika events");
 }
 
-function calcShekiyah(_Date) {
+function getShekiyah(_Date) {
   var englishYearMonthDay = getYearMonthDay(_Date);
   var response = JSON.parse(UrlFetchApp.fetch(`https://www.hebcal.com/zmanim?cfg=json&zip=21209&date=${englishYearMonthDay[0]}-${englishYearMonthDay[1]}-${englishYearMonthDay[2]}`).getContentText());
   return new Date(response.times.sunset);
 }
-
 
 function calcVHaf(_Date, dORn) {
   var prevPeriodTime = "Not yet set";
@@ -251,15 +242,15 @@ function calcVHaf(_Date, dORn) {
   var startDay = addDays(_Date, -150);
   var endDay = addDays(_Date, -3);
   var prevEvents = CalendarApp.getDefaultCalendar().getEvents(startDay, endDay);
-  for (var i = 0; i < prevEvents.length; i++) {
-    var title = prevEvents[i].getTitle().toLowerCase();
+  prevEvents.forEach(event => {
+    var title = event.getTitle().toLowerCase();
     if (title == "day period" || title == "night period") {
-      prevPeriod = prevEvents[i].getStartTime();
+      prevPeriod = event.getStartTime();
       prevPeriodTime = title;
       console.log(`prevPeriod: ${prevPeriod}`);
       console.log(`prevPeriodTime: ${prevPeriodTime}`);
     }
-  }
+  });
   var diffTime = Math.abs(prevPeriod - _Date);
   var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
   if (prevPeriodTime == "day period" && dORn == "Night") {
