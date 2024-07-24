@@ -100,8 +100,8 @@ function createVestHaflaga(_Date, dORn) {
   intervals.forEach(interval => {
     const tempTitle = `${title} (${interval} day interval)`;
     if (dORn == "Day") {
-      startDay = addDays(_Date, interval).setHours(6);
-      endDay = addDays(_Date, interval).setHours(18);
+      startDay = addDays(_Date, interval - 1).setHours(6);
+      endDay = addDays(_Date, interval - 1).setHours(18);
     }
     if (dORn == "Night") {
       startDay = addDays(_Date, interval - 1).setHours(18);
@@ -120,8 +120,8 @@ function createPlacy(_Date, dORn) {
     startDay = addDays(_Date, 1).setHours(6);
     endDay = addDays(_Date, 1).setHours(18);
   } else {
-    startDay = addDays(_Date, 0).setHours(18);
-    endDay = addDays(_Date, 1).setHours(6);
+    startDay = addDays(_Date, -1).setHours(18);
+    endDay = addDays(_Date, 0).setHours(6);
   }
   createEvent(`${notDorN} Placy`, startDay, endDay);
   createVestBedikos(startDay, "Placy", notDorN);
