@@ -40,9 +40,9 @@ function main() {
     }
     if (title == "remove vests") {
       var _150DaysFromNow = addDays(today, 150);
-      var vestEvents = CalendarApp.getDefaultCalendar().getEvents(eventsToday[i].getAllDayStartDate(), _150DaysFromNow);
+      var vestEvents = CalendarApp.getDefaultCalendar().getEvents(event.getAllDayStartDate(), _150DaysFromNow);
       vestEvents.forEach(vestEvent => {
-        var hefsekTitle = event.getTitle().toLowerCase();
+        var hefsekTitle = vestEvent.getTitle().toLowerCase();
         if (hefsekTitle.toLowerCase() == "remove vests" || hefsekTitle.toLowerCase().includes("vest haflaga") || hefsekTitle.toLowerCase().includes("placy") || hefsekTitle.toLowerCase().includes("vest hachodesh") || hefsekTitle.toLowerCase().includes("vest bainonis") || hefsekTitle.toLowerCase().includes("chavos daas")) {
           removedEvents++;
           vestEvent.deleteEvent();
