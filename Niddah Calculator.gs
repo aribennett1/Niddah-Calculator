@@ -207,7 +207,7 @@ function createEvent(title, startDay, endDay, noGuests = false) {
       calendar.createEvent(title, new Date(startDay), new Date(endDay));
     }
     else {
-      let event = calendar.createEvent(title, new Date(startDay), new Date(endDay), { guests: "slot700@gmail.com, crosa.wetstein@gmail.com" });
+      let event = calendar.createEvent(title, new Date(startDay), new Date(endDay), { guests: "EMAILS REMOVED" });
       event.addEmailReminder(1440);
     }
     eventsCreated++;    
