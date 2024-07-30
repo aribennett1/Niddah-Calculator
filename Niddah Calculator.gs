@@ -2,14 +2,15 @@
 /*For night, enter the period on the calender as being the day before, so if period was on Halachic Wedndeday Night, still put it on Tuesday Night (Wednesday Night will be halachichly Thursday, and will be day 2 of the count)*/
 var eventsCreated = 0;
 var removedEvents = 0;
-function main() {
+async function main() {  
   var today = new Date();
   var tenDaysAgo = addDays(today, -10);
   var eventsToday = CalendarApp.getDefaultCalendar().getEvents(tenDaysAgo, today);
-  eventsToday.forEach(event => {
+  for (const event of eventsToday) {
     var title = event.getTitle().toLowerCase();
     var color = event.getColor();
     if ((title == "day period" || title == "night period") && color != "2") {
+      await deleteTriggers();
       title == "day period" ? title = "Day" : title = "Night";
       var periodDate = event.getStartTime();
       createVestBainonis(periodDate, title);
@@ -17,8 +18,10 @@ function main() {
       createVestHaflaga(periodDate, title);
       event.setColor("2");
       console.log(`Finished "${title} Period"`);
+      await createTrigger();      
     }
     if (title == "hefsek tahara" && color != "2") {
+      await deleteTriggers();
       var hefsekDate = event.getStartTime();
       create14Bedikos(hefsekDate);
       var mikNightStart = addDays(hefsekDate, 7).setHours(6, 0);
@@ -26,8 +29,10 @@ function main() {
       createEvent("Mikvah Night", new Date(mikNightStart), new Date(mikNightEnd), true);
       event.setColor("2");
       console.log(`Finished "Hefsek Tahara"`);
+      await createTrigger(); 
     }
     if (title == "remove hefsek tahara") {
+      await deleteTriggers();
       var eightDaysFromNow = addDays(today, 8);
       var htEvents = CalendarApp.getDefaultCalendar().getEvents(tenDaysAgo, eightDaysFromNow);
       htEvents.forEach(htEvent => {
@@ -37,8 +42,10 @@ function main() {
           htEvent.deleteEvent();
         }
       });
+      await createTrigger();
     }
     if (title == "remove vests") {
+      await deleteTriggers();
       var _150DaysFromNow = addDays(today, 150);
       var vestEvents = CalendarApp.getDefaultCalendar().getEvents(event.getAllDayStartDate(), _150DaysFromNow);
       vestEvents.forEach(vestEvent => {
@@ -48,8 +55,10 @@ function main() {
           vestEvent.deleteEvent();
         }
       });
+      await createTrigger();
     }
-  });
+  };
+  
   console.log(`Created ${eventsCreated} events`);
   console.log(`Removed ${removedEvents} Events`);
 }
@@ -198,7 +207,7 @@ function createEvent(title, startDay, endDay, noGuests = false) {
       calendar.createEvent(title, new Date(startDay), new Date(endDay));
     }
     else {
-      let event = calendar.createEvent(title, new Date(startDay), new Date(endDay), { guests: [EMAILS REMOVED] });
+      let event = calendar.createEvent(title, new Date(startDay), new Date(endDay), { guests: "slot700@gmail.com, crosa.wetstein@gmail.com" });
       event.addEmailReminder(1440);
     }
     eventsCreated++;    
@@ -334,4 +343,23 @@ function addDays(date, days) {
   var result = new Date(date);
   result.setDate(result.getDate() + days);
   return result;
+}
+
+async function deleteTriggers() {
+  return new Promise((resolve) => {
+    const triggers = ScriptApp.getProjectTriggers();
+    triggers.forEach(trigger => ScriptApp.deleteTrigger(trigger));
+    console.log(`Deleted ${triggers.length} triggers`)
+    resolve();
+  });
+}
+
+async function createTrigger() {
+  if (ScriptApp.getProjectTriggers().length > 1) {
+    await deleteTriggers();
+  }
+  if (ScriptApp.getProjectTriggers().length == 0) {
+    ScriptApp.newTrigger('main').forUserCalendar("[Calendar email]").onEventUpdated().create();
+    console.log("Created trigger");
+  }
 }
