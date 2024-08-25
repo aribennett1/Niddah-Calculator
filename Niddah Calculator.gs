@@ -34,8 +34,7 @@ async function main() {
     }
     if (title == "remove vests") {
       await deleteTriggers();
-      var _150DaysFromNow = addDays(today, 150);
-      deleteEvents(event.getAllDayStartDate(), _150DaysFromNow, ["remove vests", "vest haflaga", "placy", "vest hachodesh", "vest bainonis", "chavos daas"]);
+      deleteEvents(event.getAllDayStartDate(), addDays(today, 150), ["remove vests", "vest haflaga", "placy", "vest hachodesh", "vest bainonis", "chavos daas"]);
       await createTrigger();
     }
   };
