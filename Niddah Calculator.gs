@@ -1,72 +1,54 @@
-
 /*For night, enter the period on the calender as being the day before, so if period was on Halachic Wedndeday Night, still put it on Tuesday Night (Wednesday Night will be halachichly Thursday, and will be day 2 of the count)*/
 var eventsCreated = 0;
 var removedEvents = 0;
+var disabledEvents = 0;
 async function main() {  
   var today = new Date();
   var tenDaysAgo = addDays(today, -10);
   var eventsToday = CalendarApp.getDefaultCalendar().getEvents(tenDaysAgo, today);
   for (const event of eventsToday) {
-    var title = event.getTitle().toLowerCase();
+    const title = event.getTitle().toLowerCase();
     var color = event.getColor();
     if ((title == "day period" || title == "night period") && color != "2") {
       await deleteTriggers();
-      title == "day period" ? title = "Day" : title = "Night";
+      let dORn = title == "day period" ? "Day" : "Night";
       var periodDate = event.getStartTime();
-      createVestBainonis(periodDate, title);
-      createVestHachodesh(periodDate, title);
-      createVestHaflaga(periodDate, title);
+      createVestBainonis(periodDate, dORn);
+      createVestHachodesh(periodDate, dORn);
+      createVestHaflaga(periodDate, dORn);
       event.setColor("2");
-      console.log(`Finished "${title} Period"`);
+      console.log(`Finished "${title}"`);
       await createTrigger();      
     }
     if (title == "hefsek tahara" && color != "2") {
       await deleteTriggers();
-      var hefsekDate = event.getStartTime();
-      create14Bedikos(hefsekDate);
-      var mikNightStart = addDays(hefsekDate, 7).setHours(6, 0);
-      var mikNightEnd = addDays(hefsekDate, 7).setHours(18, 0);
-      createEvent("Mikvah Night", new Date(mikNightStart), new Date(mikNightEnd), true);
+      create14Bedikos(event.getStartTime());      
       event.setColor("2");
-      console.log(`Finished "Hefsek Tahara"`);
+      console.log(`Finished "${title}"`);
       await createTrigger(); 
     }
     if (title == "remove hefsek tahara") {
       await deleteTriggers();
-      var eightDaysFromNow = addDays(today, 8);
-      var htEvents = CalendarApp.getDefaultCalendar().getEvents(tenDaysAgo, eightDaysFromNow);
-      htEvents.forEach(htEvent => {
-        var hefsekTitle = htEvent.getTitle().toLowerCase();
-        if (hefsekTitle == "remove hefsek tahara" || hefsekTitle.substring(0, 8) == "bedika #" || hefsekTitle == "hefsek tahara" || hefsekTitle == "mikvah night") {
-          removedEvents++;
-          htEvent.deleteEvent();
-        }
-      });
+      deleteEvents(tenDaysAgo, addDays(today, 8), ["remove hefsek tahara", "bedika #", "hefsek tahara", "mikvah night"]);
       await createTrigger();
     }
     if (title == "remove vests") {
       await deleteTriggers();
       var _150DaysFromNow = addDays(today, 150);
-      var vestEvents = CalendarApp.getDefaultCalendar().getEvents(event.getAllDayStartDate(), _150DaysFromNow);
-      vestEvents.forEach(vestEvent => {
-        var hefsekTitle = vestEvent.getTitle().toLowerCase();
-        if (hefsekTitle.toLowerCase() == "remove vests" || hefsekTitle.toLowerCase().includes("vest haflaga") || hefsekTitle.toLowerCase().includes("placy") || hefsekTitle.toLowerCase().includes("vest hachodesh") || hefsekTitle.toLowerCase().includes("vest bainonis") || hefsekTitle.toLowerCase().includes("chavos daas")) {
-          removedEvents++;
-          vestEvent.deleteEvent();
-        }
-      });
+      deleteEvents(event.getAllDayStartDate(), _150DaysFromNow, ["remove vests", "vest haflaga", "placy", "vest hachodesh", "vest bainonis", "chavos daas"]);
       await createTrigger();
     }
   };
   
-  console.log(`Created ${eventsCreated} events`);
+  console.log(`Created ${eventsCreated} Events`);
   console.log(`Removed ${removedEvents} Events`);
+  console.log(`Disabled ${disabledEvents} Events`);
 }
 
 function createVestBainonis(_Date, dORn) {
   var title = "Vest Bainonis";
-  deleteEvents(_Date, addDays(_Date, 31), title);
-  deleteEvents(_Date, addDays(_Date, 31), "Chavos Daas");
+  deleteEvents(_Date, addDays(_Date, 31), [title]);
+  deleteEvents(_Date, addDays(_Date, 31), ["Chavos Daas"]);
   var startDay, endDay;
   if (dORn == "Day") {
     startDay = addDays(_Date, 29).setHours(6);
@@ -103,7 +85,7 @@ function createVestHaflaga(_Date, dORn) {
   var intervals = calcVHaf(_Date, dORn);
   console.log("intervals:" + intervals);
   if (intervals) {
-    deleteEvents(_Date, addDays(_Date, intervals[0] + 1), title);
+    deleteEvents(_Date, addDays(_Date, intervals[0] + 1), [title]);
   }
   let startDay, endDay;
   intervals.forEach(interval => {
@@ -122,7 +104,7 @@ function createVestHaflaga(_Date, dORn) {
 }
 
 function createPlacy(_Date, dORn) {
-  deleteEvents(addDays(_Date, -31), addDays(_Date, 3), "Placy");
+  deleteEvents(addDays(_Date, -31), addDays(_Date, 3), ["Placy"]);
   const notDorN = dORn == "Day" ? "Night" : "Day";
   let startDay, endDay;
   if (notDorN === "Day") {
@@ -185,13 +167,23 @@ function createBedikaEvent(startHour, endHour, label, daysToAdd = 0) {
   console.log(isVestBainonis ? `Created "Two ${dORn} ${title} Bedikos"` : `Created "${dORn} ${title} Bedika"`);
 }
 
-function deleteEvents(startDay, endDay, title) {
+function deleteEvents(startDay, endDay, titles) {
   let futureEvents = CalendarApp.getDefaultCalendar().getEvents(startDay, endDay);
   futureEvents.forEach(event => {
-    if (event.getTitle().includes(title)) {
-      console.log(`Deleting "${event.getTitle()}" on ${event.getStartTime()}...`);
-      event.deleteEvent();
-      removedEvents++;
+    let eventTitle = event.getTitle().toLowerCase();
+    if (titles.some(title => eventTitle.includes(title.toLowerCase())) && !eventTitle.startsWith("[disabled]")) {
+      if (eventTitle.includes("vest ") && !(eventTitle.includes("ohr") || eventTitle.includes("bedika"))) {
+        console.log(`Disabling "${event.getTitle()}" on ${event.getStartTime()}...`);
+        event.setTitle(`[Disabled] ${event.getTitle()}`);
+        event.setColor(CalendarApp.EventColor.GRAY);
+        event.getGuestList().map(guest => event.removeGuest(guest.getEmail()));
+        disabledEvents++;      
+      }
+      else {     
+        console.log(`Deleting "${event.getTitle()}" on ${event.getStartTime()}...`);
+        event.deleteEvent();
+        removedEvents++;
+      }
     }
   });
 }
@@ -207,7 +199,7 @@ function createEvent(title, startDay, endDay, noGuests = false) {
       calendar.createEvent(title, new Date(startDay), new Date(endDay));
     }
     else {
-      let event = calendar.createEvent(title, new Date(startDay), new Date(endDay), { guests: "EMAILS REMOVED" });
+      let event = calendar.createEvent(title, new Date(startDay), new Date(endDay), { guests: [Guest's Emails] });
       event.addEmailReminder(1440);
     }
     eventsCreated++;    
@@ -236,7 +228,8 @@ function create14Bedikos(_Date) {
     createEvent(`Bedika # ${i}`, new Date(startDay), new Date(endDay), true);
     day++;
   }
-  console.log("Created 14 Bedika events");
+  createEvent("Mikvah Night", new Date(addDays(_Date, 7).setHours(6, 0)), new Date(addDays(_Date, 7).setHours(18, 0)), true);
+  console.log("Created 14 Bedika events & Mikvah Night");
 }
 
 function getShekiyah(_Date) {
@@ -359,7 +352,7 @@ async function createTrigger() {
     await deleteTriggers();
   }
   if (ScriptApp.getProjectTriggers().length == 0) {
-    ScriptApp.newTrigger('main').forUserCalendar("[Calendar email]").onEventUpdated().create();
+    ScriptApp.newTrigger('main').forUserCalendar("[Calendar Email]").onEventUpdated().create();
     console.log("Created trigger");
   }
 }
