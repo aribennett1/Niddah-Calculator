@@ -1,18 +1,18 @@
 /*For night, enter the period on the calender as being the day before, so if period was on Halachic Wedndeday Night, still put it on Tuesday Night (Wednesday Night will be halachichly Thursday, and will be day 2 of the count)*/
-var eventsCreated = 0;
-var removedEvents = 0;
-var disabledEvents = 0;
+let eventsCreated = 0;
+let removedEvents = 0;
+let disabledEvents = 0;
 async function main() {
   let today = new Date();
   let tenDaysAgo = addDays(today, -10);
   let eventsToday = CalendarApp.getDefaultCalendar().getEvents(tenDaysAgo, today);
   for (const event of eventsToday) {
     const title = event.getTitle().toLowerCase();
-    var color = event.getColor();
+    let color = event.getColor();
     if ((title == "day period" || title == "night period") && color != "2") {
       await deleteTriggers();
       let dORn = title == "day period" ? "Day" : "Night";
-      var periodDate = event.getStartTime();
+      const periodDate = event.getStartTime();
       createVestBainonis(periodDate, dORn);
       createVestHachodesh(periodDate, dORn);
       createVestHaflaga(periodDate, dORn);
@@ -106,23 +106,14 @@ function endOfVest(startDay, title, dORn) {
 }
 
 function createOhrZaruah(_Date, title, dORn) {
-  let notDorN, startDay, endDay;
-  if (dORn == "Day") {
-    notDorN = "Night";
-    startDay = addDays(_Date, -1).setHours(18);
-    endDay = addDays(_Date, 0).setHours(6);
-  }
-  if (dORn == "Night") {
-    notDorN = "Day";
-    startDay = addDays(_Date, 0).setHours(6);
-    endDay = addDays(_Date, 0).setHours(18);
-  }
+  const notDorN = dORn == "Day" ? "Night" : "Day";
+  let { startDay, endDay } = setStartDayAndEndDay(_Date, dORn === "Day" ? -1 : 0, notDorN);
   createEvent(`${notDorN} Ohr Zaruah (${dORn} ${title})`, startDay, endDay);
 }
 
 function createVestBedikos(_Date, title, dORn) {
   const isVestBainonis = title.includes("Bainonis");
-  var beg = isVestBainonis ? "1st Bedika" : "Bedika";
+  const beg = isVestBainonis ? "1st Bedika" : "Bedika";
 
   function createBedikaEvent(startHour, endHour, label, daysToAdd = 0) {
     const start = new Date(addDays(_Date, daysToAdd).setHours(startHour));
@@ -148,18 +139,18 @@ function deleteEvents(startDay, endDay, titles) {
   futureEvents.forEach(event => {
     let eventTitle = event.getTitle().toLowerCase();
     if (titles.some(title => eventTitle.includes(title.toLowerCase())) && !eventTitle.startsWith("[disabled]")) {
-      // if (eventTitle.includes("vest ") && !(eventTitle.includes("ohr") || eventTitle.includes("bedika"))) {
-      //   console.log(`Disabling "${event.getTitle()}" on ${event.getStartTime()}...`);
-      //   event.setTitle(`[Disabled] ${event.getTitle()}`);
-      //   event.setColor(CalendarApp.EventColor.GRAY);
-      //   event.getGuestList().map(guest => event.removeGuest(guest.getEmail()));
-      //   disabledEvents++;
-      // }
-      // else {
+      if (eventTitle.includes("vest ") && !(eventTitle.includes("ohr") || eventTitle.includes("bedika"))) {
+        console.log(`Disabling "${event.getTitle()}" on ${event.getStartTime()}...`);
+        event.setTitle(`[Disabled] ${event.getTitle()}`);
+        event.setColor(CalendarApp.EventColor.GRAY);
+        event.getGuestList().map(guest => event.removeGuest(guest.getEmail()));
+        disabledEvents++;
+      }
+      else {
         console.log(`Deleting "${event.getTitle()}" on ${event.getStartTime()}...`);
         event.deleteEvent();
         removedEvents++;
-      // }
+      }
     }
   });
 }
@@ -188,19 +179,19 @@ function createEvent(title, startDay, endDay, noGuests = false) {
 }
 
 function create14Bedikos(_Date) {
-  var day = 1;
-  for (var i = 1; i < 14; i += 2) {
-    var startDay = addDays(_Date, day).setHours(7, 0);
-    var endDay = addDays(_Date, day).setHours(9, 0);
+  let day = 1;
+  for (let i = 1; i < 14; i += 2) {
+    let startDay = addDays(_Date, day).setHours(7, 0);
+    let endDay = addDays(_Date, day).setHours(9, 0);
     createEvent(`Bedika # ${i}`, new Date(startDay), new Date(endDay), true);
     day++;
   }
   day = 1;
-  var afternoon = getShekiyah(_Date);
-  for (var i = 2; i <= 14; i += 2) {
-    var startDay = addDays(afternoon, day);
+  let afternoon = getShekiyah(_Date);
+  for (let i = 2; i <= 14; i += 2) {
+    let startDay = addDays(afternoon, day);
     startDay = (startDay.getTime() - (30 * 60000));
-    var endDay = addDays(afternoon, day);
+    let endDay = addDays(afternoon, day);
     createEvent(`Bedika # ${i}`, new Date(startDay), new Date(endDay), true);
     day++;
   }
@@ -209,8 +200,8 @@ function create14Bedikos(_Date) {
 }
 
 function getShekiyah(_Date) {
-  var englishYearMonthDay = getYearMonthDay(_Date);
-  var response = JSON.parse(UrlFetchApp.fetch(`https://www.hebcal.com/zmanim?cfg=json&zip=21209&date=${englishYearMonthDay[0]}-${englishYearMonthDay[1]}-${englishYearMonthDay[2]}`).getContentText());
+  const englishYearMonthDay = getYearMonthDay(_Date);
+  const response = JSON.parse(UrlFetchApp.fetch(`https://www.hebcal.com/zmanim?cfg=json&zip=21209&date=${englishYearMonthDay[0]}-${englishYearMonthDay[1]}-${englishYearMonthDay[2]}`).getContentText());
   return new Date(response.times.sunset);
 }
 
@@ -257,11 +248,11 @@ function calcVHaf(_Date, dORn) {
 const instantiateIntervals = () => PropertiesService.getScriptProperties().setProperty("intervals", JSON.stringify([0]));
 
 function calcVHac(_Date) {
-  var englishYearMonthDay = getYearMonthDay(_Date);
+  const englishYearMonthDay = getYearMonthDay(_Date);
   let response = JSON.parse(UrlFetchApp.fetch(`https://www.hebcal.com/converter?cfg=json&gy=${englishYearMonthDay[0]}&gm=${englishYearMonthDay[1]}&gd=${englishYearMonthDay[2]}&g2h=1`).getContentText());
-  var hebrewYear = response.hy;
-  var hebrewMonth = getNextHebrewMonth(response.hm);
-  var hebrewDay = response.hd.toString().padStart(2, '0');
+  let hebrewYear = response.hy;
+  const hebrewMonth = getNextHebrewMonth(response.hm);
+  const hebrewDay = response.hd.toString().padStart(2, '0');
 
   if (hebrewMonth === "Tishrei") {
     hebrewYear = parseInt(hebrewYear) + 1;
@@ -273,7 +264,7 @@ function calcVHac(_Date) {
 }
 
 function getNextHebrewMonth(month) {
-  var months = ["Nisan", "Iyyar", "Sivan", "Tamuz", "Av", "Elul", "Tishrei", "Cheshvan", "Kislev", "Tevet", "Sh'vat", "Adar", "Adar1", "Adar2"];
+  const months = ["Nisan", "Iyyar", "Sivan", "Tamuz", "Av", "Elul", "Tishrei", "Cheshvan", "Kislev", "Tevet", "Sh'vat", "Adar", "Adar1", "Adar2"];
   if (month == "Sh'vat") {
     return "Adar1";
   }
@@ -286,7 +277,7 @@ function getNextHebrewMonth(month) {
   if (month == "Adar1") {
     return "Adar2";
   }
-  for (var i = 0; i < 10; i++) {
+  for (let i = 0; i < 10; i++) {
     if (month == months[i]) {
       return months[i + 1];
     }
@@ -296,7 +287,7 @@ function getNextHebrewMonth(month) {
 const getYearMonthDay = (_Date) => [_Date.getFullYear(), String(_Date.getMonth() + 1).padStart(2, '0'), String(_Date.getDate()).padStart(2, '0')];
 
 function addDays(date, days) {
-  var result = new Date(date);
+  let result = new Date(date);
   result.setDate(result.getDate() + days);
   return result;
 }
