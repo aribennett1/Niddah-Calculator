@@ -46,8 +46,7 @@ async function main() {
 
 function createVestBainonis(_Date, dORn) {
   var title = "Vest Bainonis";
-  deleteEvents(_Date, addDays(_Date, 31), [title]);
-  deleteEvents(_Date, addDays(_Date, 31), ["Chavos Daas"]);
+  deleteEvents(_Date, addDays(_Date, 31), [title, "Chavos Daas"]);
   var startDay, endDay;
   if (dORn == "Day") {
     startDay = addDays(_Date, 29).setHours(6);
