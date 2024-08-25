@@ -2,10 +2,10 @@
 var eventsCreated = 0;
 var removedEvents = 0;
 var disabledEvents = 0;
-async function main() {  
-  var today = new Date();
-  var tenDaysAgo = addDays(today, -10);
-  var eventsToday = CalendarApp.getDefaultCalendar().getEvents(tenDaysAgo, today);
+async function main() {
+  let today = new Date();
+  let tenDaysAgo = addDays(today, -10);
+  let eventsToday = CalendarApp.getDefaultCalendar().getEvents(tenDaysAgo, today);
   for (const event of eventsToday) {
     const title = event.getTitle().toLowerCase();
     var color = event.getColor();
@@ -16,29 +16,30 @@ async function main() {
       createVestBainonis(periodDate, dORn);
       createVestHachodesh(periodDate, dORn);
       createVestHaflaga(periodDate, dORn);
-      event.setColor("2");
-      console.log(`Finished "${title}"`);
-      await createTrigger();      
+      await endOfMain(title, event);
     }
     if (title == "hefsek tahara" && color != "2") {
       await deleteTriggers();
-      create14Bedikos(event.getStartTime());      
-      event.setColor("2");
-      console.log(`Finished "${title}"`);
-      await createTrigger(); 
+      create14Bedikos(event.getStartTime());
+      await endOfMain(title, event);
     }
     if (title == "remove hefsek tahara") {
       await deleteTriggers();
       deleteEvents(tenDaysAgo, addDays(today, 8), ["remove hefsek tahara", "bedika #", "hefsek tahara", "mikvah night"]);
-      await createTrigger();
+      await endOfMain(title);
     }
-    if (title == "remove vests") {
+    if (title == "remove vestos") {
       await deleteTriggers();
       deleteEvents(event.getAllDayStartDate(), addDays(today, 150), ["remove vests", "vest haflaga", "placy", "vest hachodesh", "vest bainonis", "chavos daas"]);
-      await createTrigger();
+      await endOfMain(title);
     }
   };
-  
+}
+
+async function endOfMain(title, event = null) {
+  event?.setColor("2");
+  console.log(`Finished "${title}"`);
+  await createTrigger();
   console.log(`Created ${eventsCreated} Events`);
   console.log(`Removed ${removedEvents} Events`);
   console.log(`Disabled ${disabledEvents} Events`);
@@ -81,7 +82,6 @@ function createVestHachodesh(_Date, dORn) {
 function createVestHaflaga(_Date, dORn) {
   var title = "Vest Haflaga";
   var intervals = calcVHaf(_Date, dORn);
-  console.log("intervals:" + intervals);
   if (intervals) {
     deleteEvents(_Date, addDays(_Date, intervals[0] + 1), [title]);
   }
@@ -114,7 +114,6 @@ function createPlacy(_Date, dORn) {
   }
   createEvent(`${notDorN} Placy`, startDay, endDay);
   createVestBedikos(startDay, "Placy", notDorN);
-  console.log(`Created "${notDorN} Placy"`);
 }
 
 function endOfVest(startDay, title, dORn) {
@@ -122,7 +121,6 @@ function endOfVest(startDay, title, dORn) {
     createOhrZaruah(startDay, title, dORn);
   }
   createVestBedikos(startDay, title, dORn);
-  console.log(`Created "${dORn} ${title}"`);
 }
 
 function createOhrZaruah(_Date, title, dORn) {
@@ -137,15 +135,14 @@ function createOhrZaruah(_Date, title, dORn) {
     startDay = addDays(_Date, 0).setHours(6);
     endDay = addDays(_Date, 0).setHours(18);
   }
-  createEvent(`${notDorN} Ohr Zaruah (${dORn} ${title})`, startDay, endDay)
-  console.log(`Created "${dORn} Ohr Zaruah"`);
+  createEvent(`${notDorN} Ohr Zaruah (${dORn} ${title})`, startDay, endDay);
 }
 
 function createVestBedikos(_Date, title, dORn) {
   const isVestBainonis = title.includes("Bainonis");
   var beg = isVestBainonis ? "1st Bedika" : "Bedika";
 
-function createBedikaEvent(startHour, endHour, label, daysToAdd = 0) {
+  function createBedikaEvent(startHour, endHour, label, daysToAdd = 0) {
     const start = new Date(addDays(_Date, daysToAdd).setHours(startHour));
     const end = new Date(addDays(_Date, daysToAdd).setHours(endHour));
     createEvent(`${label} (${title})`, start, end, true);
@@ -162,7 +159,6 @@ function createBedikaEvent(startHour, endHour, label, daysToAdd = 0) {
       createBedikaEvent(3, 6, "2nd Bedika", 1);
     }
   }
-  console.log(isVestBainonis ? `Created "Two ${dORn} ${title} Bedikos"` : `Created "${dORn} ${title} Bedika"`);
 }
 
 function deleteEvents(startDay, endDay, titles) {
@@ -175,9 +171,9 @@ function deleteEvents(startDay, endDay, titles) {
         event.setTitle(`[Disabled] ${event.getTitle()}`);
         event.setColor(CalendarApp.EventColor.GRAY);
         event.getGuestList().map(guest => event.removeGuest(guest.getEmail()));
-        disabledEvents++;      
+        disabledEvents++;
       }
-      else {     
+      else {
         console.log(`Deleting "${event.getTitle()}" on ${event.getStartTime()}...`);
         event.deleteEvent();
         removedEvents++;
@@ -188,19 +184,19 @@ function deleteEvents(startDay, endDay, titles) {
 
 function createEvent(title, startDay, endDay, noGuests = false) {
   const calendar = CalendarApp.getDefaultCalendar();
-  
+
   const events = calendar.getEvents(new Date(startDay), new Date(endDay));
   const eventAlreadyCreated = events.some(event => event.getTitle().includes(title));
-  
+
   if (!eventAlreadyCreated) {
-     if (noGuests) {
+    if (noGuests) {
       calendar.createEvent(title, new Date(startDay), new Date(endDay));
     }
     else {
-      let event = calendar.createEvent(title, new Date(startDay), new Date(endDay), { guests: [Guest's Emails] });
+      let event = calendar.createEvent(title, new Date(startDay), new Date(endDay), { guests: [Guests' Emails] });
       event.addEmailReminder(1440);
     }
-    eventsCreated++;    
+    eventsCreated++;
     console.log(`Created event "${title}" from ${new Date(startDay)} to ${new Date(endDay)}`);
     return true;
   } else {
@@ -237,58 +233,46 @@ function getShekiyah(_Date) {
 }
 
 function calcVHaf(_Date, dORn) {
-  var prevPeriodTime = "Not yet set";
-  var prevPeriod = _Date;
-  var startDay = addDays(_Date, -150);
-  var endDay = addDays(_Date, -3);
-  var prevEvents = CalendarApp.getDefaultCalendar().getEvents(startDay, endDay);
+  let prevPeriodTime = "Not yet set";
+  let prevPeriod = _Date;
+  const prevEvents = CalendarApp.getDefaultCalendar().getEvents(addDays(_Date, -150), addDays(_Date, -3));
   prevEvents.forEach(event => {
-    var title = event.getTitle().toLowerCase();
+    const title = event.getTitle().toLowerCase();
     if (title == "day period" || title == "night period") {
       prevPeriod = event.getStartTime();
       prevPeriodTime = title;
-      console.log(`prevPeriod: ${prevPeriod}`);
-      console.log(`prevPeriodTime: ${prevPeriodTime}`);
     }
   });
-  var diffTime = Math.abs(prevPeriod - _Date);
-  var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-  if (prevPeriodTime == "day period" && dORn == "Night") {
-    diffDays++;
-  }
-  if (prevPeriodTime == "night period" && dORn == "Day") {
-    diffDays--;
-  }
-  console.log("diffDays: ", diffDays);
-  //USE TO RESET INTERVAL ARRAY, COMMENT OUT REST OF FUNCTION
-  // var intervals = [];
-  // intervals.push(diffDays);
-  // intervals = JSON.stringify(intervals);
-  // PropertiesService.getScriptProperties().setProperty("intervals", intervals);
-  // console.log("intervals: " + intervals);
-  if (diffDays > 7) {
-    var intervals = JSON.parse(PropertiesService.getScriptProperties().getProperty("intervals"));
-    console.log("intervals: " + intervals);
-    for (var num = intervals.length - 1; num >= 0; num--) {
-      if (intervals[num] == diffDays) { console.log(`diffDays (${diffDays}) = ${intervals[num]} interval, exiting loop...`); break; }
-      if (intervals[num] > diffDays) {
-        console.log(`diffDays (${diffDays}) didn't pass ${intervals[num]} interval, adding ${diffDays}...`);
-        intervals.push(diffDays);
-        break;
-      }
-      else {
-        console.log(`diffDays (${diffDays}) passed ${intervals[num]} interval, removing ${intervals[num]}...`);
-        intervals.pop();
-      }
+  console.log(`prevPeriod: ${prevPeriod}`);
+  console.log(`prevPeriodTime: ${prevPeriodTime}`);
+  if (prevPeriodTime == "night period") addDays(prevPeriod, 1);
+  if (dORn == "Night") addDays(_Date, 1);
+  const diffDays = Math.ceil(Math.abs(prevPeriod - _Date) / (1000 * 60 * 60 * 24)) + 1;
+  console.log("diffDays: ", diffDays);  
+  let intervals = JSON.parse(PropertiesService.getScriptProperties().getProperty("intervals"));
+  console.log("intervals: " + intervals);
+  for (let num = intervals.length - 1; num >= 0; num--) {
+    if (intervals[num] == diffDays) { 
+      console.log(`diffDays (${diffDays}) = ${intervals[num]} interval, exiting loop...`); 
+      break;
     }
-    if (intervals.length == 0) { intervals.push(diffDays); }
-    console.log("intervals: " + intervals);
-    let jintervals = JSON.stringify(intervals);
-    PropertiesService.getScriptProperties().setProperty("intervals", jintervals);
-    return intervals;
+    if (intervals[num] > diffDays) {
+      console.log(`diffDays (${diffDays}) didn't pass ${intervals[num]} interval, adding ${diffDays}...`);
+      intervals.push(diffDays);
+      break;
+    }
+    else {
+      console.log(`diffDays (${diffDays}) passed ${intervals[num]} interval, removing ${intervals[num]}...`);
+      intervals.pop();
+    }
   }
-  return [];
+  if (intervals.length == 0) { intervals.push(diffDays); }
+  console.log("intervals: " + intervals);
+  PropertiesService.getScriptProperties().setProperty("intervals", JSON.stringify(intervals));
+  return intervals;
 }
+
+const instantiateIntervals = () => PropertiesService.getScriptProperties().setProperty("intervals", JSON.stringify([0]));
 
 function calcVHac(_Date) {
   var englishYearMonthDay = getYearMonthDay(_Date);
@@ -305,7 +289,6 @@ function calcVHac(_Date) {
 
   return new Date(response.gy, parseInt(response.gm) - 1, response.gd);
 }
-
 
 function getNextHebrewMonth(month) {
   var months = ["Nisan", "Iyyar", "Sivan", "Tamuz", "Av", "Elul", "Tishrei", "Cheshvan", "Kislev", "Tevet", "Sh'vat", "Adar", "Adar1", "Adar2"];
