@@ -30,7 +30,7 @@ async function main() {
     }
     if (title == "remove vestos") {
       await deleteTriggers();
-      deleteEvents(event.getAllDayStartDate(), addDays(today, 150), ["remove vests", "vest haflaga", "placy", "vest hachodesh", "vest bainonis", "chavos daas"]);
+      deleteEvents(event.getAllDayStartDate(), addDays(today, 150), ["remove vestos", "vest haflaga", "placy", "vest hachodesh", "vest bainonis", "chavos daas"]);
       await endOfMain(title);
     }
   };
@@ -46,16 +46,9 @@ async function endOfMain(title, event = null) {
 }
 
 function createVestBainonis(_Date, dORn) {
-  var title = "Vest Bainonis";
+  let title = "Vest Bainonis";
   deleteEvents(_Date, addDays(_Date, 31), [title, "Chavos Daas"]);
-  var startDay, endDay;
-  if (dORn == "Day") {
-    startDay = addDays(_Date, 29).setHours(6);
-    endDay = addDays(_Date, 29).setHours(18);
-  } else {
-    startDay = addDays(_Date, 29).setHours(18);
-    endDay = addDays(_Date, 30).setHours(6);
-  }
+  let {startDay, endDay} = setStartDayAndEndDay(_Date, 29, dORn)
   createEvent(`${dORn} ${title}`, startDay, endDay);
   createPlacy(startDay, dORn);
   createEvent("Chavos Daas", addDays(startDay, 1), addDays(endDay, 1));
@@ -64,38 +57,22 @@ function createVestBainonis(_Date, dORn) {
 }
 
 function createVestHachodesh(_Date, dORn) {
-  var title = "Vest Hachodesh";
-  var vhDate = calcVHac(_Date);
-  var startDay, endDay;
-  if (dORn === "Day") {
-    startDay = vhDate.setHours(6);
-    endDay = vhDate.setHours(18);
-  } else {
-    startDay = vhDate.setHours(18);
-    endDay = vhDate.setHours(30);
-  }
+  let title = "Vest Hachodesh";
+  let { startDay, endDay } = setStartDayAndEndDay(calcVHac(_Date), 0, dORn);
   if (createEvent(`${dORn} ${title}`, startDay, endDay)) {
     endOfVest(startDay, title, dORn);
   }
 }
 
 function createVestHaflaga(_Date, dORn) {
-  var title = "Vest Haflaga";
-  var intervals = calcVHaf(_Date, dORn);
+  let title = "Vest Haflaga";
+  let intervals = calcVHaf(_Date, dORn);
   if (intervals) {
     deleteEvents(_Date, addDays(_Date, intervals[0] + 1), [title]);
   }
-  let startDay, endDay;
   intervals.forEach(interval => {
     const tempTitle = `${title} (${interval} day interval)`;
-    if (dORn == "Day") {
-      startDay = addDays(_Date, interval - 1).setHours(6);
-      endDay = addDays(_Date, interval - 1).setHours(18);
-    }
-    if (dORn == "Night") {
-      startDay = addDays(_Date, interval - 1).setHours(18);
-      endDay = addDays(_Date, interval).setHours(6);
-    }
+    let { startDay, endDay } = setStartDayAndEndDay(_Date, interval - 1, dORn)
     createEvent(`${dORn} ${tempTitle}`, startDay, endDay);
     endOfVest(startDay, tempTitle, dORn);
   });
@@ -104,16 +81,21 @@ function createVestHaflaga(_Date, dORn) {
 function createPlacy(_Date, dORn) {
   deleteEvents(addDays(_Date, -31), addDays(_Date, 3), ["Placy"]);
   const notDorN = dORn == "Day" ? "Night" : "Day";
-  let startDay, endDay;
-  if (notDorN === "Day") {
-    startDay = addDays(_Date, 1).setHours(6);
-    endDay = addDays(_Date, 1).setHours(18);
-  } else {
-    startDay = addDays(_Date, -1).setHours(18);
-    endDay = addDays(_Date, 0).setHours(6);
-  }
+  let { startDay, endDay } = setStartDayAndEndDay(_Date, notDorN === "Day" ? 1 : -1, notDorN);
   createEvent(`${notDorN} Placy`, startDay, endDay);
   createVestBedikos(startDay, "Placy", notDorN);
+}
+
+function setStartDayAndEndDay(_Date, daysToAdd, dORn) {
+  let vestDate = addDays(_Date, daysToAdd);
+    if (dORn === "Day") {
+      startDay = vestDate.setHours(6);
+      endDay = vestDate.setHours(18);
+    } else {
+      startDay = vestDate.setHours(18);
+      endDay = vestDate.setHours(30);
+    }
+    return { startDay, endDay };
 }
 
 function endOfVest(startDay, title, dORn) {
@@ -166,18 +148,18 @@ function deleteEvents(startDay, endDay, titles) {
   futureEvents.forEach(event => {
     let eventTitle = event.getTitle().toLowerCase();
     if (titles.some(title => eventTitle.includes(title.toLowerCase())) && !eventTitle.startsWith("[disabled]")) {
-      if (eventTitle.includes("vest ") && !(eventTitle.includes("ohr") || eventTitle.includes("bedika"))) {
-        console.log(`Disabling "${event.getTitle()}" on ${event.getStartTime()}...`);
-        event.setTitle(`[Disabled] ${event.getTitle()}`);
-        event.setColor(CalendarApp.EventColor.GRAY);
-        event.getGuestList().map(guest => event.removeGuest(guest.getEmail()));
-        disabledEvents++;
-      }
-      else {
+      // if (eventTitle.includes("vest ") && !(eventTitle.includes("ohr") || eventTitle.includes("bedika"))) {
+      //   console.log(`Disabling "${event.getTitle()}" on ${event.getStartTime()}...`);
+      //   event.setTitle(`[Disabled] ${event.getTitle()}`);
+      //   event.setColor(CalendarApp.EventColor.GRAY);
+      //   event.getGuestList().map(guest => event.removeGuest(guest.getEmail()));
+      //   disabledEvents++;
+      // }
+      // else {
         console.log(`Deleting "${event.getTitle()}" on ${event.getStartTime()}...`);
         event.deleteEvent();
         removedEvents++;
-      }
+      // }
     }
   });
 }
@@ -193,7 +175,7 @@ function createEvent(title, startDay, endDay, noGuests = false) {
       calendar.createEvent(title, new Date(startDay), new Date(endDay));
     }
     else {
-      let event = calendar.createEvent(title, new Date(startDay), new Date(endDay), { guests: [Guests' Emails] });
+      let event = calendar.createEvent(title, new Date(startDay), new Date(endDay), { guests: "[Guests' Emails]" });
       event.addEmailReminder(1440);
     }
     eventsCreated++;
@@ -248,12 +230,12 @@ function calcVHaf(_Date, dORn) {
   if (prevPeriodTime == "night period") addDays(prevPeriod, 1);
   if (dORn == "Night") addDays(_Date, 1);
   const diffDays = Math.ceil(Math.abs(prevPeriod - _Date) / (1000 * 60 * 60 * 24)) + 1;
-  console.log("diffDays: ", diffDays);  
+  console.log("diffDays: ", diffDays);
   let intervals = JSON.parse(PropertiesService.getScriptProperties().getProperty("intervals"));
   console.log("intervals: " + intervals);
   for (let num = intervals.length - 1; num >= 0; num--) {
-    if (intervals[num] == diffDays) { 
-      console.log(`diffDays (${diffDays}) = ${intervals[num]} interval, exiting loop...`); 
+    if (intervals[num] == diffDays) {
+      console.log(`diffDays (${diffDays}) = ${intervals[num]} interval, exiting loop...`);
       break;
     }
     if (intervals[num] > diffDays) {
