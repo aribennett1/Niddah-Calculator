@@ -67,9 +67,7 @@ function createVestHachodesh(_Date, dORn) {
 function createVestHaflaga(_Date, dORn) {
   let title = "Vest Haflaga";
   let intervals = calcVHaf(_Date, dORn);
-  if (intervals) {
-    deleteEvents(_Date, addDays(_Date, intervals[0] + 1), [title]);
-  }
+  deleteEvents(_Date, addDays(_Date, intervals[0] + 1), [title]);
   intervals.forEach(interval => {
     const tempTitle = `${title} (${interval} day interval)`;
     let { startDay, endDay } = setStartDayAndEndDay(_Date, interval - 1, dORn)
