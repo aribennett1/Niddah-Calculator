@@ -1,20 +1,29 @@
-/*For night, enter the period on the calender as being the day before, so if period was on Halachic Wedndeday Night, still put it on Tuesday Night (Wednesday Night will be halachichly Thursday, and will be day 2 of the count)*/
+/**
+ * Niddah Calculator for Google Calendar.
+ *
+ * For a night period, create the event on the preceding civil evening.
+ * For example, a period beginning Tuesday night (halachic Wednesday)
+ * should be entered on Tuesday night.
+ *
+ * Set ZMANIM_ZIP_CODE to the ZIP code used for sunset calculations.
+ */
+const ZMANIM_ZIP_CODE = 'YOUR_ZIP_CODE';
 let eventsCreated = 0;
 let removedEvents = 0;
 let disabledEvents = 0;
 let badBedika;
 async function main() {
-  let today = new Date();
-  let tenDaysAgo = addDays(today, -10);
-  let eventsToday = CalendarApp.getDefaultCalendar().getEvents(tenDaysAgo, today);
+  const today = new Date();
+  const tenDaysAgo = addDays(today, -10);
+  const eventsToday = CalendarApp.getDefaultCalendar().getEvents(tenDaysAgo, today);
   for (const event of eventsToday) {
     const title = event.getTitle().toLowerCase();
-    let color = event.getColor();
+    const color = event.getColor();
     if ((title == "day period" || title == "night period") && color != "2") {
       await deleteTriggers();
-      let dORn = title == "day period" ? "Day" : "Night";
+      const dORn = title == "day period" ? "Day" : "Night";
       const periodDate = event.getStartTime();
-      createVestBainonis(periodDate, dORn);      
+      createVestBainonis(periodDate, dORn);
       createVestHaflaga(periodDate, dORn);
       createVestHachodesh(periodDate, dORn);
       await endOfMain(title, event);
@@ -33,6 +42,11 @@ async function main() {
       await deleteTriggers();
       deleteEvents(event.getAllDayStartDate(), addDays(today, 150), ["remove vestos", "vest haflaga", "placy", "vest hachodesh", "vest bainonis", "chavos daas"]);
       await endOfMain(title);
+    }
+    if (title == "good bedika" && color != "2") {
+      await deleteTriggers();
+      removeDayOfMonth(event.getStartTime());
+      await endOfMain(title, event);
     }
   };
 }
@@ -58,8 +72,9 @@ function createVestBainonis(_Date, dORn) {
 }
 
 function createVestHachodesh(_Date, dORn) {
+  if (dORn == "Night") _Date = addDays(_Date, 1);
   let title = "Vest Hachodesh";
-  const {hebrewYear, hebrewMonth, hebrewDays} = calcVHac(_Date);
+  const { hebrewYear, hebrewMonth, hebrewDays } = calcVHac(_Date);
   hebrewDays.forEach(day => {
     const date = convertHebToGreg(hebrewYear, hebrewMonth, day);
     const tempTitle = `${title} (${day})`;
@@ -73,13 +88,16 @@ function createVestHachodesh(_Date, dORn) {
 function createVestHaflaga(_Date, dORn) {
   let title = "Vest Haflaga";
   let intervals = calcVHaf(_Date, dORn);
-  deleteEvents(_Date, addDays(_Date, intervals[0] + 1), [title]);
-  intervals.forEach(interval => {
-    const tempTitle = `${title} (${interval} day interval)`;
-    let { startDay, endDay } = setStartDayAndEndDay(_Date, interval - 1, dORn)
-    createEvent(`${dORn} ${tempTitle}`, startDay, endDay);
-    endOfVest(startDay, tempTitle, dORn);
-  });
+  console.log('intervals: ' + intervals);
+  if (intervals != null) {
+    deleteEvents(_Date, addDays(_Date, intervals[0] + 1), [title]);
+    intervals.forEach(interval => {
+      const tempTitle = `${title} (${interval} day interval)`;
+      let { startDay, endDay } = setStartDayAndEndDay(_Date, interval - 1, dORn)
+      createEvent(`${dORn} ${tempTitle}`, startDay, endDay);
+      endOfVest(startDay, tempTitle, dORn);
+    });
+  }
 }
 
 function createPlacy(_Date, dORn) {
@@ -92,6 +110,8 @@ function createPlacy(_Date, dORn) {
 
 function setStartDayAndEndDay(_Date, daysToAdd, dORn) {
   let vestDate = addDays(_Date, daysToAdd);
+  let startDay;
+  let endDay;
   if (dORn === "Day") {
     startDay = vestDate.setHours(6);
     endDay = vestDate.setHours(18);
@@ -145,9 +165,8 @@ function deleteEvents(startDay, endDay, titles) {
     if (titles.some(title => eventTitle.includes(title.toLowerCase())) && !eventTitle.startsWith("[disabled]")) {
       if (eventTitle.includes("vest ") && !(eventTitle.includes("ohr") || eventTitle.includes("bedika"))) {
         console.log(`Disabling "${event.getTitle()}" on ${event.getStartTime()}...`);
-        event.setTitle(`[Disabled] ${event.getTitle()}`);
-        event.setColor(CalendarApp.EventColor.GRAY);
-        event.getGuestList().map(guest => event.removeGuest(guest.getEmail()));
+        createEvent(event.getTitle(), event.getStartTime(), event.getEndTime(), true, true);
+        event.deleteEvent();
         disabledEvents++;
       }
       else {
@@ -159,20 +178,20 @@ function deleteEvents(startDay, endDay, titles) {
   });
 }
 
-function createEvent(title, startDay, endDay, noGuests = false) {
+function createEvent(title, startDay, endDay, _noGuests = false, createDisabled = false) {
   const calendar = CalendarApp.getDefaultCalendar();
+
+  if (createDisabled) {
+    let disabledEvent = calendar.createEvent(`[Disabled] ${title}`, new Date(startDay), new Date(endDay));
+    disabledEvent.setColor(CalendarApp.EventColor.GRAY);
+    return true;
+  }
 
   const events = calendar.getEvents(new Date(startDay), new Date(endDay));
   const eventAlreadyCreated = events.some(event => event.getTitle().includes(title));
 
   if (!eventAlreadyCreated) {
-    if (noGuests) {
-      calendar.createEvent(title, new Date(startDay), new Date(endDay));
-    }
-    else {
-      let event = calendar.createEvent(title, new Date(startDay), new Date(endDay), { guests: "EMAILS REMOVED" });
-      event.addEmailReminder(1440);
-    }
+    calendar.createEvent(title, new Date(startDay), new Date(endDay));
     eventsCreated++;
     console.log(`Created event "${title}" from ${new Date(startDay)} to ${new Date(endDay)}`);
     return true;
@@ -205,7 +224,7 @@ function create14Bedikos(_Date) {
 
 function getShekiyah(_Date) {
   const englishYearMonthDay = getYearMonthDay(_Date);
-  const response = JSON.parse(UrlFetchApp.fetch(`https://www.hebcal.com/zmanim?cfg=json&zip=21209&date=${englishYearMonthDay[0]}-${englishYearMonthDay[1]}-${englishYearMonthDay[2]}`).getContentText());
+  const response = JSON.parse(UrlFetchApp.fetch(`https://www.hebcal.com/zmanim?cfg=json&zip=${encodeURIComponent(ZMANIM_ZIP_CODE)}&date=${englishYearMonthDay[0]}-${englishYearMonthDay[1]}-${englishYearMonthDay[2]}`).getContentText());
   return new Date(response.times.sunset);
 }
 
@@ -219,6 +238,9 @@ function calcVHaf(thisPeriod, dORn) {
       if (title == "night period") prevPeriod = addDays(prevPeriod, 1);
     }
   });
+  if (prevPeriod == undefined) {
+    return null;
+  }
   prevEvents = CalendarApp.getDefaultCalendar().getEvents(addDays(thisPeriod, -7), thisPeriod);
   console.log("Looking for badBedika...")
   prevEvents.forEach(event => {
@@ -233,8 +255,15 @@ function calcVHaf(thisPeriod, dORn) {
   console.log(`badBedika: ${badBedika}`);
 
   if (dORn == "Night") thisPeriod = addDays(thisPeriod, 1);
-  const thisPeriodDays = Math.ceil(Math.abs(prevPeriod - thisPeriod) / (1000 * 60 * 60 * 24)) + 1;
-  const badBedikaDays = badBedika ? Math.ceil(Math.abs(badBedika - thisPeriod) / (1000 * 60 * 60 * 24)) + 1 : thisPeriodDays;
+  // TODO: Verify the inclusive day count for haflaga intervals.
+  const prevDate = new Date(prevPeriod);
+  const currentDate = new Date(thisPeriod);
+
+  prevDate.setHours(0, 0, 0, 0);
+  currentDate.setHours(0, 0, 0, 0);
+
+  const thisPeriodDays = Math.round((currentDate - prevDate) / (1000 * 60 * 60 * 24)) + 1;
+  const badBedikaDays = badBedika ? Math.ceil(Math.abs(badBedika - thisPeriod) / (1000 * 60 * 60 * 24)) : thisPeriodDays;
   console.log("diffDays: ", thisPeriodDays);
   let intervals = JSON.parse(PropertiesService.getScriptProperties().getProperty("intervals"));
   console.log("intervals: " + intervals);
@@ -262,68 +291,53 @@ function calcVHaf(thisPeriod, dORn) {
 const instantiateIntervals = () => PropertiesService.getScriptProperties().setProperty("intervals", JSON.stringify([0]));
 
 function calcVHac(_Date) {
-  let {hebrewYear, hebrewMonth, hebrewDay} = convertGregToHeb(_Date);
-  let { hebrewDay: badBedikaHebrewDay } = badBedika ? convertGregToHeb(badBedika) : 0;
+  let { hebrewYear, hebrewMonth, hebrewDay } = convertGregToHeb(_Date);
+  let badBedikaHebrewDay = badBedika ? convertGregToHeb(badBedika).hebrewDay : 0;
   let dates = JSON.parse(PropertiesService.getScriptProperties().getProperty("daysOfMonth"));
   let dayToUse = badBedikaHebrewDay != 0 ? badBedikaHebrewDay : hebrewDay;
-  console.log(`hebrewDay: ${hebrewDay}`); 
+  console.log(`hebrewDay: ${hebrewDay}`);
   console.log(`badBedikaHebrewDay: ${badBedikaHebrewDay}`);
-  console.log(`dayToUse: ${dayToUse}`); 
-  if (dayToUse != hebrewDay) {
-    let added = false; 
-    for (let i = dates.length - 1; i >= 0; i--) {
-        if (dates[i] > hebrewDay) {
-            dates.splice(i + 1, 0, hebrewDay);
-            added = true;
-            break;
-        }
-        else if (dates[i] < hebrewDay && (hebrewDay - dates[i] > 7)) {
-            dates.splice(i + 1, 0, hebrewDay);
-            added = true;
-            break;
-        }
-    }
-    if (!added) dates.unshift(hebrewDay);
-  }
-  for (let i = dates.length - 1; i >= 0; i--) {      
-    // If hebrewDay is equal to dates[i], stop because we already have this day in the array
-    if (dayToUse === dates[i]) {
-      console.log(`dayToUse (${dayToUse}) = ${dates[i]}, exiting loop...`);
-      break;
-    }
+  console.log(`dayToUse: ${dayToUse}`);
 
-    // If hebrewDay wasn't passed, insert it into the array and keep the array sorted
-    if (dayToUse < dates[i]) {
-      console.log(`dayToUse (${dayToUse}) didn't pass ${dates[i]}, adding ${dayToUse}...`);
-      dates.push(dayToUse);  // Insert the new day in the correct order
-      break;
-    }
+  // Check if the dayToUse already exists in the array
+  if (!dates.includes(dayToUse)) {
+    console.log(`Adding ${dayToUse} to days of month array`);
+    dates.push(dayToUse);
 
-    // If hebrewDay is greater than current date[i] or if crossing into a new month
-    else if (dayToUse > dates[i] || (dayToUse < dates[i] && (dates[i] - hebrewDay) >= 7)) {
-      console.log(`dayToUse (${dayToUse}) passed ${dates[i]}, removing ${dates[i]}...`);
-      dates.pop();  // Remove passed day
-    }
+    // Sort the array to keep it in order
+    dates.sort((a, b) => a - b);
+  } else {
+    console.log(`Day ${dayToUse} already exists in the array`);
   }
 
-  // If the array is empty or hebrewDay is the smallest, add it to the beginning
-  if (dates.length === 0) { dates.push(hebrewDay); }
+  PropertiesService.getScriptProperties().setProperty("daysOfMonth", JSON.stringify(dates));
 
-   PropertiesService.getScriptProperties().setProperty("daysOfMonth", JSON.stringify(dates));
-
-   hebrewMonth = getNextHebrewMonth(hebrewMonth);
+  hebrewMonth = getNextHebrewMonth(hebrewMonth);
 
   if (hebrewMonth === "Tishrei") {
     hebrewYear = parseInt(hebrewYear) + 1;
   }
 
-  return {hebrewYear: hebrewYear, hebrewMonth: hebrewMonth, hebrewDays: dates}
+  return { hebrewYear: hebrewYear, hebrewMonth: hebrewMonth, hebrewDays: dates }
+}
+
+function removeDayOfMonth(_Date) {
+  let { hebrewDay } = convertGregToHeb(_Date);
+  let dates = JSON.parse(PropertiesService.getScriptProperties().getProperty("daysOfMonth"));
+  const index = dates.indexOf(hebrewDay);
+  if (index !== -1) {
+    console.log(`Removing day ${hebrewDay} from days of month array`);
+    dates.splice(index, 1);
+    PropertiesService.getScriptProperties().setProperty("daysOfMonth", JSON.stringify(dates));
+  } else {
+    console.log(`Day ${hebrewDay} not found in days of month array`);
+  }
 }
 
 function convertGregToHeb(_Date) {
   const englishYearMonthDay = getYearMonthDay(_Date);
   let response = JSON.parse(UrlFetchApp.fetch(`https://www.hebcal.com/converter?cfg=json&gy=${englishYearMonthDay[0]}&gm=${englishYearMonthDay[1]}&gd=${englishYearMonthDay[2]}&g2h=1`).getContentText());
-  return {hebrewYear: response.hy, hebrewMonth: response.hm, hebrewDay: response.hd}
+  return { hebrewYear: response.hy, hebrewMonth: response.hm, hebrewDay: response.hd }
 }
 
 function convertHebToGreg(hebrewYear, hebrewMonth, hebrewDay) {
@@ -374,7 +388,7 @@ async function createTrigger() {
     await deleteTriggers();
   }
   if (ScriptApp.getProjectTriggers().length == 0) {
-    ScriptApp.newTrigger('main').forUserCalendar("EMAIL REMOVED").onEventUpdated().create();
+    ScriptApp.newTrigger('main').forUserCalendar(CalendarApp.getDefaultCalendar().getId()).onEventUpdated().create();
     console.log("Created trigger");
   }
 }
